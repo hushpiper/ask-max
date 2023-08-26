@@ -1,0 +1,9 @@
+baseURL = 'http://ask-max.neocities.org/'
+languageCode = 'en-us'
+title = "Maybe let's just ask Max?"
+theme = "hugo-theme-monochrome"
+
+[params]
+enable_toc = true # default: true
+color_scheme = "dark" # "light" or "dark"
+enable_collapsible_toc = false # default: false
