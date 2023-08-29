@@ -1,12 +1,11 @@
 ---
 title: "Presets"
-date: 2023-08-24T10:49:44-06:00
 draft: false
 ---
 
-Note: this information was originally posted on Rentry [here](https://rentry.org/llm-settings). That Rentry is now considered deprecated. It won't be updated.
+Note: this information was originally posted on Rentry [here](https://rentry.org/llm-settings). That Rentry is now considered deprecated. It won't be updated, but it *will* remain in place for the sake of directing people here.
 
-# The Local LLM Settings Guide/Rant
+## The Local LLM Settings Guide/Rant
 
 Hi. I'm Hush. I'm obsessed with tweaking LLM settings.
 
@@ -22,11 +21,11 @@ Then Llama 2 came around. Aaaaaaaand it sucked. (Or 13B did anyway--I hear 70B i
 
 Llama 1 is well-rounded enough that almost all settings presets will have their advantages. Best Guess is, well, the best guess for most models. From there, tweak temperature and repetition penalty to taste. Models that are very verbose might want Storywriter to make them more reserved and direct, while very dry models might want Ouroboros to make them more florid and creative. But you can't go wrong by starting with Best Guess. In my tests it also responded quite well to Top-K, and you may get a lot of mileage out of messing with that slider.
 
-(TODO: link to those presets for people who are using Ooba only and thus don't have them.)
+(TODO: link to those presets for people who are using KCPP only and thus don't have them.)
 
 ### Llama 2 (13B) - no fine-tunes
 
-If you're on ExLlama, set Mirostat mode to 2; if you're on llama.cpp or kobold.cpp, set it to 1 or 2--I don't know the difference for sure, so I'd suggest 2 just in case. Then use the Godlike preset. If your loader doesn't support Mirostat then Big O preset and may God help you.
+If you're on ExLlama, set Mirostat mode to 2; if you're on llama.cpp or kobold.cpp, set it to 1 or 2--there doesn't seem to be much of a difference. Then use the Godlike preset. If your loader doesn't support Mirostat then Big O preset and may God help you.
 
 If you tweak (and aren't using Mirostat), keep in mind that raising Top-P tends to be the most effective way to make it perform better. In my tests, if Top-P was not at around 0.6 *minimum*, it would simply suffocate, and nothing else you could do would fix it. It's like trying to start a fire in a vacuum by simply pouring more gasoline on it. If you do have it at 0.6 or so, you can make up the rest of the difference with a ludicrously high temperature, and perhaps some Top-A. If it's too erratic for you at that point, add in some Top-K.
 
@@ -156,39 +155,6 @@ So what I did was this:
 Not perfect, but sufficiently scientific to get good results. So far I have tested Airochronos L2 13B, vanilla Llama 2 13B, and L1 Wizard-Vicuna-Uncensored-33B as a control (it's what I had on hand). Others have tested Airoboros L2 13B for me and found the same results I got from Airochronos. The methodology I'm using is really exhausting for a focus-deficient person like me, so it's slow going, but I do plan to also try vanilla Llama 1, Nous Hermes (or Chronos-Hermes) L2, and some others.
 
 1: It's hard to elaborate on my standards for this, but line-editing is my Thing, so I'm confident in my ear for good prose.
-
-# Hush's ~~Big~~ Little Book of Symptoms
-
-This section is extremely under construction, but aspires to be a diagnostic manual for different issues you may see in your outputs. Keep in mind that as your prompt to the model changes, your settings needs will also change: an opening message that says "Oh, hi! How are you doing today?" is going to shine best with different settings than when you're 90 messages deep into the chat with detailed character cards and ChromaDB running. Most models are flexible enough for a "set it and forget it" approach, but if you're having trouble, it's worth taking a look at your settings.
-
-One note: keep in mind that almost all of these issues can also be addressed (at least in part) by enabling Mirostat. Mirostat essentially disables all the Top-Whatever sampler settings and controls them dynamically for you. It takes away some of your control, but nevertheless gives excellent results, particularly on extremely fussy models like Llama 2. From there you can fuck around with temperature or repetition penalty to taste.
-
-### Looping
-
-Looping is usually a problem of your repetition penalty being too low, since that's the issue repetition penalty was meant to solve. You can also try lowering temperature or lowering Top-P. It can also be caused n by *very* low temperature, so if you're under 0.7 or so, raise it--and it doesn't hurt to raise both temperature or repetition penalty. In a pinch, you can also add in some Top-A to introduce some more diverse possibilities into the pool and shake it out of the loop.
-
-### Disobedience
-
-Instruct-tuned models are supposed to follow instructions. If you find they're running wildly off script and ignoring your Instruct Mode prompt, it's usually approached as a prompting issue, but might also be a settings issue. There are two ways to address this: Top-K or Top-A. Yes, this makes no sense since those two oppose each other; I'm confused by it too. If you are on an L2 Airoboros model, raise Top-A first and see what happens. On anything else, try Top-K first and Top-A if that's not enough.
-
-### Parroting
-
-This refers to the model echoing or paraphrasing parts of your prompt, such as your character cards or author's notes. I'm unclear on exactly what causes or contributes to this, but my gut says it's usually due to the model not having any good answers to your prompt, such that the most likely answer is simply to echo what was already said. Running with that theory, try raising the temperature, then Top-A, then Top-P. You might also try cautiously raising your repetition penalty. I suspect that No Repeat Ngram Size will help a substantially with that as well, but haven't tested.
-
-But don't discount prompt-based remedies either: turning on Instruct Mode with an appropriate instruct preset (or even a custom system prompt) can help, or even adding an author's note saying something like "Do NOT repeat or paraphrase any part of this prompt". It could also be the case that something in your prompt is getting it turned around, for example if you have something like Smart Context (the SillyTavern extras version) injecting its context into the middle of the prompt. There are, unfortunately, many possible causes and therefore many possible remedies.
-
-### Short Responses
-
-This is often because the model gets to a certain point and just doesn't know where to go from there, so it stops. The quickest fix is to lower repetition penalty and raise temperature; an alternative might be to raise Top-A and/or Top-P.
-
-With that said though, this is often an issue that responds really well to prompt-based solutions. An author's note instructing the model to give detailed description, and then giving examples of how to do so ("describe sights, sounds, sensations, and the thoughts and feelings of the characters in detail") will often go a very long way.
-
-### Booooriiiiing
-
-Sometimes your model will give you answers that are... *fine,* but boring. Soulless, one might say. A low Typical P will often cause this, and on modern models, there's not much call for that, so just raise it. Alternatively, raising temperature or Top-A can introduce variety and interest into an otherwise bland model/chat. If that causes incoherence or word salad, the various repetition penalties can do a lot to help.
-
-A related problem is answers that don't vary on rerolls. I do need to do more testing with this, but it seems to be due to the same factors, and probably has the same solutions.
-
 # Presets Presets Everywhere
 
 PRESETS! We have so many of them! So here are my (unfinished, under construction) thoughts on them. Fair warning, these come from the point of view of Llama models. Many of these presets were created for older models, which tended to need a tighter leash to perform well; consequently, they cause all kinds of problems on models like Llama that don't need it. This is probably the case on most of the presets I take a dim view of, so keep that in mind. I also generally use Ooba rather than Kobold, so I haven't looked at or used the Kobold-only presets yet.
