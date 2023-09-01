@@ -21,3 +21,4 @@ The hobbyist AI community at large has settled on rentry.org as their location o
  - https://rentry.org/lmg-resources
  - https://rentry.org/lmg_template
  - https://rentry.org/LocalModelsPapers
+ - https://rentry.org/llm-training

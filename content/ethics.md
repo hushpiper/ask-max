@@ -1,7 +1,7 @@
 ---
 title: "Ethics"
 date: 2023-08-24T10:55:35-06:00
-draft: false
+draft: true
 ---
 
 Generative AI is a difficult topic for many, especially those whose lives and livelihoods are impacted by the need to compete with a technology built on the fruits of their labor that can put out product faster than they can hope to do. With this, as with most things in my life, I take a pragmatic view.

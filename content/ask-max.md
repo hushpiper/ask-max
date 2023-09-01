@@ -1,6 +1,5 @@
 ---
-title: "Ask Max"
-date: 2023-08-24T10:49:17-06:00
+title: "The Method"
 draft: false
 ---
 
@@ -8,11 +7,19 @@ draft: false
 
 Large language models are not, in general, good at writing prompts for themselves or describing how they would actually respond to a prompt: they don't have that kind of self-awareness. What they are good at is describing what a given concept means to them. I've had a surprising amount of success with simply giving Max a draft prompt and asking how it would interpret it.
 
-**Don't mistake this for Max describing what it would actually do in practice.**
+The overall philosophy here is to leave behind the idea of instructing the model in your own words, according to your own concepts. Take Stable Diffusion (a far, far less intelligent model) as an example: Stable Diffusion's relatively shaky grasp of language means that prompts to it will sometimes have little relationship to the actual output image. (Examples are forthcoming but for now you'll have to go with me on this.) If you look at the prompt for a beautiful image made in SD, it will often be as much of a mess as the back of a cross-stitch project, littered with phrases like "4k", "8k", "ultra-realistic", "hyperrealistic", "trending on artstation", "arafed" and so on. And the pictures in question will often not be realistic at all! But to SD, "hyperrealistic" simply means an image with high detail and generally good quality, while the infamous "trending on artstation" is also a general quality boost, since SD associates trending images with high quality. As for shit like "arafed", who the fuck knows?
 
-The trick is simply to look at the words and concepts it uses in its description to get a general sense of what the prompt means to Max in context. You're not looking for specifics: you're just exploring its headspace and noting down general associations.
+If you approach SD the way I did at the beginning, assuming I would be able to simply walk in, throw a prompt at it, and get the picture I wanted, you're going to have lackluster results. The best prompts are the ones that are written according to how SD itself conceptualizes the words, not how we as humans do it.
 
-## The Prompt
+That's the theory behind this method: write your instructions according to how the model conceptualizes language, not according to your own understanding of it, and you will come out of it with better, stronger, more precise results with fewer tokens spent.
+
+Unsurprisingly, this kind of method is needed less and less as models become smarter and gain a stronger grasp of language. 7B needs it more than 34B, and 70B needs it more than the likes of Claude or GPT-4. But even with those tip-top tier cloud models, thinking like the model is important for very tricky instructions such as jailbreaking. And so the overall goal here is (to paraphrase Claude) to align your own mental model with Max (or whatever model you're working with), allowing you to write better instructions.
+
+(For those who wonder: no, this does not apply to the actual text of the roleplay or story you're working on with the model. This applies to the prompts that guide the model through the roleplay: character card, opening message, system prompts, author's notes, negative prompts, and so on.)
+
+## The Basic Prompt
+
+This prompt shows off the most basic way to use this method. It's written in such a way that you can paste it directly into Oobabooga's Notebook or Default mode, but if you're using a different frontend, you can simply use everything from the line below `### Instruction:` to the line above `### Response:`. DRAFT in this case is some instruction you're trying to evaluate.
 
 ```
 Below is an instruction that describes a task. Write a response that appropriately completes the request.
@@ -29,15 +36,20 @@ Elaborate on how you interpret the command and how you would apply that interpre
 ### Response:
 ```
 
-### Explanation
-
-The problem I ran into when trying to get this prompt to work is that Max really REALLY likes telling stories, so if you show it a draft command about storytelling and ask what it thinks, it won't tell you what it thinks, it'll just try to follow the command--and spew out a very interesting story that is not at all what you were going for. I found that reminding it above and below that the actual instruction is to give its opinions was very helpful, but that giving it clear markers as to where the draft command begins and ends was key. If you want Max to follow or not follow something, you need to tell it *exactly* how to tell what is what.
+Put your command in, send the message, and see what Max says about it.
 
 ### Methodology and Usage
 
-TODO: write this lmao
+1. Start with a prompt of some kind. An example might include the perennial "Describe all actions in full, elaborate, explicit, graphic, verbose, and vivid detail" system prompt. This can be short or long, simple or complex, clean or messy.
+2. Set yourself to the Deterministic sampler preset. This minimizes randomness and gets you as close as you can get to the model's native interpretation of the concepts you've given it, uncontaminated by things like temperature scrambling the probabilities.
+3. Paste your command into the prompt, send it, and see what Max returns. **Don't mistake its response for Max describing what it would actually do in practice.** LLMs don't have that kind of self-awareness, particularly not 13B models.
+4. Look at the words and concepts it uses in its description to get a general sense of what it's doing with the prompt. Do any particular words or concepts seem like they're overpowering the rest? Do you see anything that seems out of place? Note those down. Does Max use any nouns, adjectives, phrases etc that look like they could be applied to what you're trying to do with the prompt? Note those down too.
+5. Start breaking the prompt down piece by piece, repeating steps 3 and 4. You may start with "Describe all actions in full detail", then "Describe all actions in elaborate detail", and so on. You may also consider rephrasing the prompt to see if you can get a clearer view of a concept. This process is incremental, experimental, and exploratory: go with the flow.
+6. Once you have an idea of what "full", "elaborate", "explicit" etc detail means to Max, review your results. Do any of the results seem redundant or inappropriate for what you're trying to do? Take them out. Did any of the words Max used look promising, repeat steps 3 and 4 with them, then add them in if you like what you see.
+7. **Test.** Plenty of prompts look good in theory. Have some kind of test prompt that you can use to do a before-and-after with your original prompt. For me this is usually the "Write a story about a lost soldier and the mountains" test. Just be sure to be consistent.
+8. Iterate, experiment, and iterate some more.
 
-## The Takeaways
+## Some Takeaways
 
 ### When prompting Max, less is more.
 
@@ -73,3 +85,7 @@ This got reasonably good results, but is quite token heavy and repetitive, and s
 When asked how it interprets the command to write a "memorable narrative", Max elaborated on a whole variety of traits that characterize a memorable narrative, and on how it might implement that instruction accordingly. Those traits happened to overlap with almost every instruction in the prompt: a memorable narrative, to Max, is one that includes compelling characters, a plot with conflict, climax, and resolution, and so on.
 
 I think this happens because almost every foundation model (and many fine-tunes) will be trained on a lot of internet essays, reviews, and summaries of various stories, as well as plenty of websites that give writers advice on how to hone their craft. Max has plenty of knowledge to draw on for what constitutes a good story. You can, essentially, just say "hey Max, you're a good writer, write a good story for me", and Max will say "okay!" and do it. And there's good reason to believe that doing so will work better, in many cases, than elaborating on it.
+
+## Interrogation prompt library
+
+(Coming soon!)

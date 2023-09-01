@@ -66,8 +66,8 @@ paginate = 5
 [languages]
   [languages.en]
     languageName = "English"
-    title = "Terminal"
-    subtitle = "A simple, retro theme for Hugo"
+    title = "Ask Max"
+    subtitle = "Maybe let's just ask?"
     owner = ""
     keywords = ""
     copyright = ""
@@ -82,7 +82,7 @@ paginate = 5
     words = "words"
 
     [languages.en.params.logo]
-      logoText = "Terminal"
+      logoText = "Ask Max"
       logoHomeLink = "/"
 
     [languages.en.menu]
