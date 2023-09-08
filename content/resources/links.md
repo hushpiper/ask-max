@@ -17,6 +17,9 @@ The hobbyist AI community at large has settled on rentry.org as their location o
  - https://rentry.org/ALLMRR
  - https://rentry.org/ayumi_erp_rating
 
+## Prickly Contrarians
+ - https://rentry.org/yourpromptsucks
+
 ## Misc
  - https://rentry.org/lmg-resources
  - https://rentry.org/lmg_template
