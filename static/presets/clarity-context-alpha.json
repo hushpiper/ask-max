@@ -1,0 +1,6 @@
+{
+    "story_string": "{{#if system}}{{system}}{{/if}}\n### Instruction:\nBEGIN CONTEXT\n{{#if wiBefore}}{{wiBefore}}{{/if}}\n{{#if description}}{{description}}{{/if}}\n{{#if personality}}{{char}}'s personality: {{personality}}{{/if}}\n{{#if scenario}}Scenario: {{scenario}}{{/if}}\n{{#if wiAfter}}{{wiAfter}}{{/if}}\n\n{{#if persona}}{{user}} is: {{persona}}{{/if}}",
+    "chat_start": "\nEND CONTEXT",
+    "example_separator": "NEW EXAMPLE",
+    "name": "clarity"
+}

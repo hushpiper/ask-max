@@ -87,13 +87,17 @@ paginate = 5
 
     [languages.en.menu]
       [[languages.en.menu.main]]
+        identifier = "ask-max"
+        name = "The Method"
+        url = "/ask-max"
+      [[languages.en.menu.main]]
+        identifier = "posts"
+        name = "Blog"
+        url = "/posts"
+      [[languages.en.menu.main]]
         identifier = "presets"
         name = "Presets"
         url = "/presets"
-      [[languages.en.menu.main]]
-        identifier = "ask-max"
-        name = "Ask Max"
-        url = "/ask-max"
       [[languages.en.menu.main]]
         identifier = "prompt-buffet"
         name = "Prompt Buffet"

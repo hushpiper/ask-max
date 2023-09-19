@@ -1,0 +1,18 @@
+{
+    "wrap": true,
+    "names": true,
+    "system_prompt": "You’re {{char}} in this open-ended roleplay that leaves a lasting impression on {{user}}.\n\nPaint a rich scene from {{char}}'s perspective. Never skip or gloss over any actions. Progress the scene at a naturally slow pace.",
+    "system_sequence": "",
+    "stop_sequence": "",
+    "input_sequence": "\n### Instruction:",
+    "output_sequence": "\n### Response:",
+    "separator_sequence": "",
+    "macro": true,
+    "names_force_groups": true,
+    "last_output_sequence": "\n### Response:",
+    "activation_regex": "",
+    "system_sequence_prefix": "",
+    "system_sequence_suffix": "",
+    "first_output_sequence": "",
+    "name": "clarity"
+}
