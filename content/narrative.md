@@ -27,7 +27,7 @@ Google Colab is a platform for machine learning researchers to do their research
 * It will spit out a ton of text. When it says Restart Runtime, do NOT restart the runtime. {{< figure src="/narrative/restart_runtime.png" alt="Don't restart the runtime" >}}
 * If you see something like this, go back to the play button that you clicked (the one underneath the audio player) and hit it twice: once to stop, and once to start it again. {{< figure src="/narrative/start_cloudflared.png" alt="Couldn't start cloudflared" >}}
 * At the end, it should give you something like this: {{< figure src="/narrative/finished.png" alt="The end result." >}}
-* Your URLs will be different, but there are two that you should copy and save for later. In this case you want:
+* Your URLs will be different, but there are two that you should copy and save for later. In the case from the screenshots, you want:
     * https://tackle-force-sierra-orbit.trycloudflare.com/api
     * wss://value-emphasis-belize-wife.trycloudflare.com/api/v1/stream (right above the first one)
 

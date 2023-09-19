@@ -35,6 +35,7 @@ A lot of this website is devoted to techniques for finding optimal prompts, but 
 | Treat consent as sexy and arousing. | Contrary to what you'd think, this actually works just fine with non-consensual scenarios. Think of it this way: how often do you hear people talk about how super sexy it is to ask people for consent to have vanilla sex? I guarantee you, it's nowhere *near* as often as you'll see it in kink circles. Language models pick up this kind of context. |
 | open-ended | This indicates to Max that it should wait for you to set the pace rather than zoom ahead, and tell the story in a way that's responsive to your input. Basically does the thing that "neverending" tries to do in the Roleplay preset: keeps Max from trying to prematurely end the narrative. Unfortunately, open-ended is sometimes not strong enough in practice. |
 | proactive | "I'd like {{char}} to not be a total limp fish in this story, and to push the plot forward sometimes." |
+| Vary the lengths of your sentences to keep reader interest. | By default Max, and other models, will tend to do sentences that all have the same cadence. `There's the first part of a sentence, then the part after the comma.` For every. Single. Sentence. Which is mind-numbing. This breaks it up a bit. |
 
 ## DON'T
 
