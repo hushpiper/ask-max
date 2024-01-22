@@ -13,8 +13,6 @@ I wasn't always like this. In the days of the original Llama model, I had three 
 
 Then Llama 2 came around. Aaaaaaaand it sucked. (Or 13B did anyway--I hear 70B is probably better.) It was smarter than L1 13B! That much was undeniable. But even fine-tunes on what I knew to be excellent datasets acted like I was trying to tame a wild fucking horse that refused to follow instructions and bit me on every other reroll--and it required a *ton* of rerolls. But I am stubborn. And after some really mind-numbing testing, I found that Llama 2 requires drastically different settings than Llama Classic(TM) to really shine. So now I give the results to you, so that you don't have to go through all that bullshit.
 
-[TOC]
-
 ## The Short Version
 
 ### Llama 1
@@ -44,6 +42,12 @@ I suspect that this will not be true for Airoboros merges with the extensive typ
 At the time of writing, this is likely the most popular Llama 2 RP model, with ridiculous stability considering that it's a cobbled-together monstrosity built on the mess that is Llama 2. It's able to take extreme temperatures and ridiculously boosted context sizes even without any SuperHOT lora or extra training; some people reported pushing it up to 12k without issues.
 
 In my testing, the golden combination was high temperature (0.7-1.5), Top-P as low as 0.2, and usually Top-K between 75-100. Accordingly, best preset in terms of prose was Space Alien, while the best for controllability was Titanic. (Not sure why that's true of the latter, since Titanic has so many things happening, but I suspect the ETA Cutoff.) With that said, as expected of a stable model, practically any preset was fine. Even Yara gave good, lengthy results.
+
+### Mixtral
+
+Okay, forget everything you think you know about different samplers and how they operate in practice: Mixtral lives in Opposite World. A significant number of samplers will have effects that are diametrically opposite to what they do on other models. I'll note the most important ones below, but the tl;dr is that you should generally use a dynamic sampler like Mirostat, Min P or TFS, *but* be super careful with the Min P once you're past around 4k tokens in your chat. There's a preset made specifically for that situation that you should take a look at: [Amphibian-Frozen Wood Frog](presets/Amphibian-FrozenWoodFrog.json).
+
+If you're earlier in the chat, Frozen Wood Frog will still work, but you can also try one of the "Miro Metal" (Gold, Silver, Bronze) presets or Universal presets. If Universal seems boring, lower the Min P to around 0.05.
 
 ## Huh?
 
@@ -90,6 +94,8 @@ The thing to know about the repetition penalty is that language is inherently re
 
 As with all of these settings, repetition penalty is a balance. Use freely, but with care.
 
+P.S. If you're on Mixtral, ignore all of that. Rep pen on Mixtral acts closer to temperature, boosting creativity and surprise at the expense of comprehension. If you find things are really boring you can try setting it to something between 1 and perhaps 1.15, but I really suggest you keep it at 1.
+
 ### Top-K
 
 Top-K is a sampler strategy: samplers govern how your inference software will pluck the next word out of the probability soup that is your model. Sampler settings are highly, *highly* dependent on both your model and the settings of other samplers, so it's difficult to get a pure, unadulterated example of What Top-(Whatever) Does In The Wild. I can only describe the patterns of behavior I've seen.
@@ -105,6 +111,8 @@ In the wild, it's most similar to a reverse-repetition penalty, and in fact can 
 ### Typical P
 
 Honestly I'm unclear on how this one works. What I *can* say, however, is that this should be between 0.95 and 1 on most models, and going slower than that will generally result in wooden, "soulless" writing. Also, should you wish to read up on it, its proper name is "locally typical sampling"; Typical P is just what the Transformers library calls it.
+
+If you're on Mixtral, note that a slightly lowered Typical P, like repetition penalty, will tend to boost creativity at the expense of comprehension. A *greatly* lowered Typical P might be much more desirable, but tests on that are still ongoing.
 
 ### Top-A
 
@@ -155,6 +163,7 @@ So what I did was this:
 Not perfect, but sufficiently scientific to get good results. So far I have tested Airochronos L2 13B, vanilla Llama 2 13B, and L1 Wizard-Vicuna-Uncensored-33B as a control (it's what I had on hand). Others have tested Airoboros L2 13B for me and found the same results I got from Airochronos. The methodology I'm using is really exhausting for a focus-deficient person like me, so it's slow going, but I do plan to also try vanilla Llama 1, Nous Hermes (or Chronos-Hermes) L2, and some others.
 
 1: It's hard to elaborate on my standards for this, but line-editing is my Thing, so I'm confident in my ear for good prose.
+
 # Presets Presets Everywhere
 
 PRESETS! We have so many of them! So here are my (unfinished, under construction) thoughts on them. Fair warning, these come from the point of view of Llama models. Many of these presets were created for older models, which tended to need a tighter leash to perform well; consequently, they cause all kinds of problems on models like Llama that don't need it. This is probably the case on most of the presets I take a dim view of, so keep that in mind. I also generally use Ooba rather than Kobold, so I haven't looked at or used the Kobold-only presets yet.
