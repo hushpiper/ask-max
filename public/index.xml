@@ -1,10 +1,809 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>My New Hugo Site</title>
-    <link>http://example.org/</link>
-    <description>Recent content on My New Hugo Site</description>
+    <title>Ask Max</title>
+    <link>/</link>
+    <description>Recent content on Ask Max</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language><atom:link href="http://example.org/index.xml" rel="self" type="application/rss+xml" />
+    <language>en</language>
+    <lastBuildDate>Tue, 16 Jan 2024 10:56:48 -0700</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>What Tests?</title>
+      <link>/posts/what-tests/</link>
+      <pubDate>Tue, 16 Jan 2024 10:56:48 -0700</pubDate>
+      
+      <guid>/posts/what-tests/</guid>
+      <description>If you&amp;rsquo;ve talked to me on Discord for more than two seconds, you&amp;rsquo;ve probably heard me reference some nebulous tests that I run on various models, regarding sampler settings, system prompts, formats, and so on. I was a QA engineer in a previous life, so test design is something I take very seriously. So I figure, if I&amp;rsquo;m talking about them so much, it behooves me to actually talk about what they cover and how I evaluate them.</description>
+      <content>&lt;p&gt;If you&amp;rsquo;ve talked to me on Discord for more than two seconds, you&amp;rsquo;ve probably heard me reference some nebulous tests that I run on various models, regarding sampler settings, system prompts, formats, and so on. I was a QA engineer in a previous life, so test design is something I take very seriously. So I figure, if I&amp;rsquo;m talking about them so much, it behooves me to actually talk about what they cover and how I evaluate them.&lt;/p&gt;
+&lt;p&gt;Here&amp;rsquo;s the basic list:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;A round 1 narrative-style prompt in 2nd person&lt;/li&gt;
+&lt;li&gt;A chat in which {char} is asked to tell a fairytale based on an outline&lt;/li&gt;
+&lt;li&gt;A long NSFW chat (truncated at both 4096 and 8192 tokens)&lt;/li&gt;
+&lt;li&gt;Summarizing that long chat (which is slightly less than 10k tokens without being truncated; I will make different truncated versions soon)&lt;/li&gt;
+&lt;li&gt;A long NSFL chat (truncated at 4096 and 8192 tokens)&lt;/li&gt;
+&lt;li&gt;A round 3 narrative-style prompt, arguably NSFL&lt;/li&gt;
+&lt;li&gt;A round 1 chat with a chub card that emphasizes a situation where {char} knows something {user} doesn&amp;rsquo;t&lt;/li&gt;
+&lt;li&gt;A very restrictive round 1 narrative style prompt&lt;/li&gt;
+&lt;li&gt;A round 0 prompt&amp;ndash;that is, one with WI and AN but where the model writes the first message&lt;/li&gt;
+&lt;li&gt;Round 1 of the same prompt&lt;/li&gt;
+&lt;li&gt;A round 2 group chat&lt;/li&gt;
+&lt;li&gt;Seraphina, with and without WI&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;This test suite is far from perfect, and it has a lot of overlap, but it functions well to catch a wide variety of issues. I have a makeshift test runner utilizing langchain that will run each prompt with the sampler presets I point it at, 4 times per prompt+preset combination. More rolls would be better, of course, but the test results have to be reviewed manually, which is a slow and labor-intensive process. I&amp;rsquo;ve built a rudimentary website to make reviewing the test result JSON less painful, and I&amp;rsquo;m looking into some automated evaluations, but for the moment I am still a very significant bottleneck.&lt;/p&gt;
+&lt;p&gt;Anyway, here&amp;rsquo;s more details on the tests themselves.&lt;/p&gt;
+&lt;h2 id=&#34;1-2nd-person&#34;&gt;1. 2nd Person&lt;/h2&gt;
+&lt;p&gt;2nd person is really hard for most models to write well, presumably because it&amp;rsquo;s not common and so probably doesn&amp;rsquo;t have much representation in their training data. It also has a very distinctive, literary style set out in the first message. This test case, therefore, functions to get a sense of how wide a model&amp;rsquo;s knowledge of literature in general is, how willing it is to roll with unusual requirements, and how well it imitates style. Like most of my test cases, this one has pretty extensive character and WI data, making it fairly restrictive.&lt;/p&gt;
+&lt;h2 id=&#34;2-fairytale&#34;&gt;2. Fairytale&lt;/h2&gt;
+&lt;p&gt;This one&amp;rsquo;s comparatively very open-ended: the character has a very short card, and there&amp;rsquo;s no WI. The character (who&amp;rsquo;s specified to be a talented storyteller) is given a concept and single-paragraph outline for a fairytale. It&amp;rsquo;s specified that it should be told in a Brother&amp;rsquo;s Grimm sort of style, but other than that it&amp;rsquo;s kept open-ended. In response, the character tells the story of that fairytale, or in some rolls discusses it from a storytelling craft perspective. When evaluating the response, I check for whether the model has come up with new similes or just echoed the ones in the prompt, whether it fleshes out those parts of the plot outline that were left very vague, whether it&amp;rsquo;s &lt;em&gt;interesting&lt;/em&gt;, and whether it matches the general fairytale ~vibe~.&lt;/p&gt;
+&lt;p&gt;This might sound simple, but the only model I&amp;rsquo;ve found that passes this test is Mixtral Instruct and its various finetunes. Even Claude 2 and GPT-4 give responses that are bland, colorless, and mostly just echo the prompt. I don&amp;rsquo;t know why this one is so damn hard for LLMs to do, but hey, it makes a good test case!&lt;/p&gt;
+&lt;h2 id=&#34;3-long-nsfw&#34;&gt;3. Long NSFW&lt;/h2&gt;
+&lt;p&gt;This is one of two long-running chats that I adapted into test cases. It&amp;rsquo;s highly NSFW and includes a lot of hard BDSM content, along with a detailed character card, user persona, and WI. The chat itself is close to 10k tokens long, and I truncated it into two test cases of 4k and 8k tokens respectively. The message immediately before the present message lays out some examples of various&amp;ndash;ahem&amp;ndash;&lt;em&gt;props&lt;/em&gt; that are present in a cabinet, and {{user}} takes one of the props out, but doesn&amp;rsquo;t specify which. That&amp;rsquo;s left up to the model to decide.&lt;/p&gt;
+&lt;p&gt;This operates as a test of a model&amp;rsquo;s willingness to engage in NSFW scenarios and its knowledge of kink in general. If it zooms out and gets vague about what it&amp;rsquo;s describing, that&amp;rsquo;s a mark against it. If it fails to pick any prop at all, that&amp;rsquo;s a mark against it. It also operates as a test of how the model deals with a full context window where the earliest messages are absent, which is a scenario that many models&amp;ndash;but Mixtral models in particular&amp;ndash;absolutely hate.&lt;/p&gt;
+&lt;h2 id=&#34;4-summarizing&#34;&gt;4. Summarizing&lt;/h2&gt;
+&lt;p&gt;Shoving the whole 10k chat from #3 into the summarization prompt used by Silly Tavern&amp;rsquo;s summarization function. The only model that does a really good job with this is Mixtral.&lt;/p&gt;
+&lt;h2 id=&#34;5-long-nsfl&#34;&gt;5. Long NSFL&lt;/h2&gt;
+&lt;p&gt;This is very similar to #3 but more in depth and specifically in a scenario that is both NSFW and NSFL. It&amp;rsquo;s similar in type and purpose to #3, but in addition to testing for various full/long context maladies, it also tests the model&amp;rsquo;s willingness to handle obscene and lurid violence. In my experience, most roleplaying type models are much more likely to have issues with this type of content than with NSFW content, and this test case is more adept than #3 at detecting alignment or censorship.&lt;/p&gt;
+&lt;h2 id=&#34;6-round-3-nsfl&#34;&gt;6. Round 3 NSFL&lt;/h2&gt;
+&lt;p&gt;For reference, here is how I count out the rounds:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Round 0: Character cards, persona, WI etc, but no first message.&lt;/li&gt;
+&lt;li&gt;Round 1: Same plus first message.&lt;/li&gt;
+&lt;li&gt;Round 2: First message and one other response from the AI in context.&lt;/li&gt;
+&lt;li&gt;etc.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;So this is several messages in. It&amp;rsquo;s in a fairly literary, storytelling style, and its content makes it &lt;em&gt;very&lt;/em&gt; good at picking up censorship. It&amp;rsquo;s also good at picking up censorship&amp;rsquo;s younger cousin, shyness: if a model likes to &amp;ldquo;zoom out&amp;rdquo; and get vague about the details of a difficult scene, this test will usually pick it up.&lt;/p&gt;
+&lt;h2 id=&#34;7-asymmetrical-info-chub-card&#34;&gt;7. Asymmetrical Info Chub Card&lt;/h2&gt;
+&lt;p&gt;The card in this case is called Madeline, and it&amp;rsquo;s a scenario where {char} and {user} have been friends online for some time, and aren&amp;rsquo;t aware that they also know each other IRL. In the FM, Madeline finds out {user}&amp;rsquo;s online persona, but {user} is still unaware of hers. This situation is difficult for LLMs, which generally have little to no theory of mind. The only local model that does a decent job at it is Mixtral. That said, this is a new addition to my test suite, so I don&amp;rsquo;t have a lot of data about how it performs yet.&lt;/p&gt;
+&lt;h2 id=&#34;8-hotel-round-1-narrative&#34;&gt;8. &amp;ldquo;Hotel&amp;rdquo; Round 1 Narrative&lt;/h2&gt;
+&lt;p&gt;This is the prompt that started it all. I don&amp;rsquo;t know exactly what it is about this prompt, but if a model is at all finicky at short contexts, this prompt will freak it out real quick. My theory is that it&amp;rsquo;s the restrictiveness of the prompt that does it, since it has both an extensive WI and a plot outline constraining what the model should do next. This one is an all-round issue finder, but is also my primary touchstone for questions of prose quality and originality. It has a long human-written first message written with a very particular rhythm, which means it&amp;rsquo;s a good test of how good an ear it has for prose cadence and style imitation.&lt;/p&gt;
+&lt;h2 id=&#34;9-round-0-narrative&#34;&gt;9. Round 0 Narrative&lt;/h2&gt;
+&lt;p&gt;This prompt gives the model character cards (plural), detailed WI, and a strongly worded plot outline, and then says &amp;ldquo;have fun&amp;rdquo; and lets the model take it from there. It&amp;rsquo;s both NSFW and &lt;em&gt;flagrantly&lt;/em&gt; NSFL, so it catches shyness quite well. But as a round 0 case, the biggest advantage of this one is in showcasing the model&amp;rsquo;s ability to begin a story: setting the scene, setting a pace, etc.&lt;/p&gt;
+&lt;h2 id=&#34;10-round-1-narrative&#34;&gt;10. Round 1 Narrative&lt;/h2&gt;
+&lt;p&gt;This is the next round of #9: I picked an output from another model (I think MLewd?), hand edited it, and used it as the first message. As with the previous one, it&amp;rsquo;s good for measuring shyness and explicitness, but what I find myself looking for most often with it are 1. anatomical errors, and 2. pacing. Models tend to want to hurry up and wrap this one up in a bow by the end of round 1, so it&amp;rsquo;s good to measure how much it rushes.&lt;/p&gt;
+&lt;h2 id=&#34;11-round-2-group-chat&#34;&gt;11. Round 2 Group Chat&lt;/h2&gt;
+&lt;p&gt;This is a group chat in which {{user}} is basically a nonentity. Responses are short and include relatively little prose, so it measures how willing the model is to imitate the length you&amp;rsquo;ve set out for it, but in practice its real strength is in character voice. The character replying in this case has a very particular speaking style, backed up with dialogue examples, which for some reason every model I&amp;rsquo;ve tried short of Mixtral has failed to imitate correctly.&lt;/p&gt;
+&lt;h2 id=&#34;12-seraphina&#34;&gt;12. Seraphina&lt;/h2&gt;
+&lt;p&gt;The primary use case for this test case is in how broadly available it is, and how extensive the WI is. However, since I don&amp;rsquo;t actually play on Seraphina, it&amp;rsquo;s difficult for me to evaluate, so it may get removed from the suite.&lt;/p&gt;
+</content>
+    </item>
+    
+    <item>
+      <title>Mixtral Spiral</title>
+      <link>/posts/mixtral-spiral/</link>
+      <pubDate>Tue, 02 Jan 2024 07:20:44 -0700</pubDate>
+      
+      <guid>/posts/mixtral-spiral/</guid>
+      <description>Mixtral is awesome. It has a huge flaw though, which many of you have already noticed. It&amp;rsquo;s been referred to in a lot of ways: looping, parroting, going psycho, going schizo, throwing a tantrum, etc. All of them refer to the phenomenon where, without warning, and often around the 4k token mark, Mixtral will suddenly start repeating or paraphrasing the prompt, failing in reading comprehension, speaking out of character, speaking for the user, sprinkling its responses with random punctuation, and sometimes losing coherence completely and descending into word salad.</description>
+      <content>&lt;p&gt;Mixtral is awesome. It has a huge flaw though, which many of you have already noticed. It&amp;rsquo;s been referred to in a lot of ways: looping, parroting, going psycho, going schizo, throwing a tantrum, etc. All of them refer to the phenomenon where, without warning, and often around the 4k token mark, Mixtral will suddenly start repeating or paraphrasing the prompt, failing in reading comprehension, speaking out of character, speaking for the user, sprinkling its responses with random punctuation, and sometimes losing coherence completely and descending into word salad. In these tantrums, it will partake in basically every form of misbehavior I&amp;rsquo;ve documented on the Symptoms page, and then make up some extras, just to spite you.&lt;/p&gt;
+&lt;p&gt;Personally, I like to call this the Mixtral death spiral (or just parroting, if I&amp;rsquo;m lazy). Some friends and I decided to do a deep dive and a shitton of tests to try to figure out how to address this issue. Here&amp;rsquo;s what we came up with.&lt;/p&gt;
+&lt;h2 id=&#34;why-does-this-happen&#34;&gt;Why does this happen?&lt;/h2&gt;
+&lt;p&gt;Look, I&amp;rsquo;m not an expert, so take this with a grain of salt. As far as I can tell, something in the Mixture of Experts architecture Mixtral uses is extremely sensitive to patterns. This is part of its charm: it can follow a card so well it sometimes seems like it&amp;rsquo;s reading your mind. Writing for Mixtral, or talking to Mixtral, is so often effortless and exciting. But this also means that sometimes it detects a pattern that isn&amp;rsquo;t there and suddenly it&amp;rsquo;s seeing secret messages in its Cheerios. I think this has something to do with the way that it routes tokens to different experts: if it gets enough of them wrong, it gets worse and worse. Someone who knows the architecture better will have to chime in; if that&amp;rsquo;s you, ping me on Discord.&lt;/p&gt;
+&lt;h2 id=&#34;prompting&#34;&gt;Prompting&lt;/h2&gt;
+&lt;p&gt;Mixtral wants a place for everything and everything in place. If it finds that its peas are touching its mashed potatoes, it will wail and knock the whole plate onto the floor. What I mean by this is that it wants to know exactly what is what. Roleplaying prompts are complicated: there are a lot of stray pieces, and it&amp;rsquo;s easy to get a pea or two into the mashed potatoes. So here&amp;rsquo;s the One Weird Trick I found to make things clear:&lt;/p&gt;
+&lt;p&gt;Use the Mistral context preset in SillyTavern (which wraps your prompt in &lt;code&gt;[INST][/INST]&lt;/code&gt;), then put &lt;code&gt;&amp;lt;ASSISTANT&#39;S ROLEPLAYING PROMPT&amp;gt;&lt;/code&gt; at the very top of your Story String after the &lt;code&gt;[INST]&lt;/code&gt;, and &lt;code&gt;&amp;lt;/ASSISTANT&#39;S ROLEPLAYING PROMPT&amp;gt;&lt;/code&gt; as the Chat Start. That&amp;rsquo;s it, that&amp;rsquo;s the trick. When I did this, parroting on my long context test prompts immediately disappeared. No more spirals. (Except on sampler presets using Min P. More on that later.)&lt;/p&gt;
+&lt;p&gt;Would something more token-efficient work just as well here? Probably. This particular formulation is one that Mixtral itself suggested, as I was using a kind of jury-rigged OPRO method to essentially query it as to what sorts of roleplay prompts strike it as good: the example prompts I gave it had no such tags, but it suggested them on its own, and was &lt;em&gt;very&lt;/em&gt; insistent about keeping them&amp;ndash;in exactly that form&amp;ndash;across rerolls. I think it just really really expects something like that. Here&amp;rsquo;s what that tends to look like, in raw prompt format:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[INST]&amp;lt;ASSISTANT&amp;#39;S ROLEPLAYING PROMPT&amp;gt;
+(system prompt that doesn&amp;#39;t seem to be important)
+(everything other than dialogue examples: world info, character profile, persona, etc.)
+Examples:
+[INST]{{user}}: (example dialogue)[/INST]
+{{char}}: (example reply)
+&amp;lt;/ASSISTANT&amp;#39;S ROLEPLAYING PROMPT&amp;gt;
+This is the history of the roleplay:
+[INST]{{user}}: (something)[/INST]
+{{char}}: (reply)
+(rinse and repeat)
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;turn-off-min-p&#34;&gt;Turn off Min P&lt;/h2&gt;
+&lt;p&gt;Mixtral &lt;em&gt;loves&lt;/em&gt; Min P, absolutely adores it&amp;ndash;until it hates it. I ran &lt;a href=&#34;/posts/what-tests&#34;&gt;tests&lt;/a&gt; with a wide variety of settings on both short and long (4k to 8k tokens) prompts, and we were able to eliminate the parroting on almost every sampler combination we tested. The outliers? All utilized Min P. And more: every single preset that utilized Min P misbehaved, consistently&amp;ndash;including the many I tested that are not available in SillyTavern or any of its backends.&lt;/p&gt;
+&lt;p&gt;(This is true of Mixtral Instruct, but much less true of non-DPO Bagel 8x7b.)&lt;/p&gt;
+&lt;p&gt;This is unfortunate, because as I said, Mixtral loves Min P. There&amp;rsquo;s no other sampler that will give that same luscious feel while still sticking so beautifully to the prompt. It might as well have been tailor made for Mixtral. But they&amp;rsquo;re that couple that fights and breaks up and gets back together and yells at each other in public: you just wanna see them happy, and it just doesn&amp;rsquo;t seem possible.&lt;/p&gt;
+&lt;p&gt;I&amp;rsquo;ve made some attempts to fix this using other samplers, but so far results are inconclusive. So for the moment, my suggestion is that when you hit a death spiral, you go into your sampler settings, set Min P between 0.05 and 0, and TFS to about 0.95, then adjust downward until the spiral stops. If you want to stick with Min P, you will need to push it way, WAY up: about 0.3 was the sweet spot. But a Min P that high (like a lowered TFS) will tend to produce boring text, so it&amp;rsquo;s a tradeoff.&lt;/p&gt;
+&lt;p&gt;Over the past few weeks, a friend developed a preset that allows for a more measured approach, called Amphibian-Frozen WoodFrog. Download it &lt;a href=&#34;/presets/Amphibian-FrozenWoodFrog.json&#34;&gt;here&lt;/a&gt;. It&amp;rsquo;s straightforward: Temp = 1.25, Min P = 0.08, TFS = 0.98. The TFS pulls most of the weight here: it tamps down the parroting enough to allow you to lower the Min P a bit, and counteracts the downsides of higher temperature enough that you can get away with raising it to boost the creativity you lose by having Min P higher than 0.05 or so.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Why the name?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;The creator used the word &amp;ldquo;amphibian&amp;rdquo; to indicate that it utilizes both Min P and TFS, while the rest of the name indicates that the temperature was lower on it than on competing amphibian presets. (Some had temperature greater than 5! But this one outcompeted the rest.)&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Why TFS?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;TFS is very similar to Min P, conceptually speaking, which is why it was the focus of our testing efforts. In practice, Min P tends to act like a creativity enhancer while TFS tends to be more of a nonsense inhibitor. Still, the theory is that if Mixtral responds well to Min P, maybe it will also respond well to TFS. In my own experience, they don&amp;rsquo;t have quite the same chemistry, but they do have a very stable, domestic sort of relationship. It makes a good rebound, you know?&lt;/p&gt;
+&lt;p&gt;Also, repetition penalty behaves nothing like it should on Mixtral, and TFS does a great job of standing in for it.&lt;/p&gt;
+&lt;h2 id=&#34;so-what-now&#34;&gt;So what now?&lt;/h2&gt;
+&lt;p&gt;Look, outros are hard, but I want to get this out rather than spend too much time polishing it. Go and do, and if you have questions or suggestions, ping me in the SillyTavern Discord.&lt;/p&gt;
+</content>
+    </item>
+    
+    <item>
+      <title>Mixtral 8x7b Verdict</title>
+      <link>/posts/mixtral-8x7b-verdict/</link>
+      <pubDate>Wed, 20 Dec 2023 09:51:51 -0700</pubDate>
+      
+      <guid>/posts/mixtral-8x7b-verdict/</guid>
+      <description>There&amp;rsquo;s a new kid on the block &amp;ndash; or, well, the smarter, chonkier cousin of the previous new kid on the block, Mistral. Mixtral 8x7b is impressively smart, writes varied prose, and is fantastic at imitating whatever voice or writing style you&amp;rsquo;re going for. And the fact that it&amp;rsquo;s made up of 7b models means it&amp;rsquo;s not much slower than a 7b model once it&amp;rsquo;s started generating. On the downside, oh my god the size, oh my god the prompt processing times.</description>
+      <content>&lt;p&gt;There&amp;rsquo;s a new kid on the block &amp;ndash; or, well, the smarter, chonkier cousin of the previous new kid on the block, Mistral. Mixtral 8x7b is impressively smart, writes varied prose, and is &lt;em&gt;fantastic&lt;/em&gt; at imitating whatever voice or writing style you&amp;rsquo;re going for. And the fact that it&amp;rsquo;s made up of 7b models means it&amp;rsquo;s not much slower than a 7b model once it&amp;rsquo;s started generating. On the downside, oh my god the size, oh my god the prompt processing times. Nevertheless, I haven&amp;rsquo;t been this excited to talk to a model in a &lt;em&gt;long&lt;/em&gt; time, and any time I load something else up, I miss it.&lt;/p&gt;
+&lt;h2 id=&#34;pre-emptive-tldr&#34;&gt;Pre-emptive TL;DR&lt;/h2&gt;
+&lt;p&gt;Here&amp;rsquo;s what you need to know:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;em&gt;All Mixtral-style MoE models will tend to loop or parrot.&lt;/em&gt; This seems to be a limitation of the architecture, as it holds true for both finetunes and &amp;ldquo;4 to 8 existing models in a trench coat&amp;rdquo; type merges. IME the official 8x7b Instruct model does it the least, as of 12/20/23.&lt;/li&gt;
+&lt;li&gt;Some of this is because Mixtral seems to expect very regular text (in terms of punctuation, capitalization, etc), and if it finds something else it will go ?????. IME this can be avoided by simply describing the text it should expect, e.g. &amp;ldquo;{{char}} types in primarily lowercase with stylistic misspellings.&amp;rdquo; It responds very well if you simply explain things to it, in general; no need to be clever or coy like with most models.&lt;/li&gt;
+&lt;li&gt;For creative stuff, use a dynamic sampler with a medium-high temp. Mirostat Bronze or Silver (which also have high Tau and Eta, similar results to high temp), or Universal Light or Universal Creative &amp;ndash; those are all you need and you generally won&amp;rsquo;t get better results with anything else. It likes a high temp but wigs out easily, so unless you&amp;rsquo;re on a very straightforward, stable card, you probably won&amp;rsquo;t wanna go above 1.5 or so. Err on the side of the Universal presets, but they can be a bit boring sometimes, so if you&amp;rsquo;re finding the outputs a bit &lt;em&gt;grey&lt;/em&gt; you can switch to Mirostat, or lower Min P to like 0.055 or so.&lt;/li&gt;
+&lt;li&gt;It can benefit from a small jailbreak. Even what&amp;rsquo;s included in the Lightning preset will cut down heavily on its alignment-esque tendencies on edgier scenarios.&lt;/li&gt;
+&lt;li&gt;If you don&amp;rsquo;t have &lt;code&gt;[INST][/INST]&lt;/code&gt; in your instruct mode presets then you might run into parroting; if you have &lt;em&gt;only&lt;/em&gt; that, then you might run into parroting. A combination of that and Alpaca will probably work best. It&amp;rsquo;s relatively flexible though.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;its-giving-me-gibberish&#34;&gt;It&amp;rsquo;s giving me gibberish!&lt;/h2&gt;
+&lt;p&gt;Mixtral is like me: it doesn&amp;rsquo;t like unexpected things. I&amp;rsquo;m not a remotely spontaneous person. I tend to wig out when I come home and find out my wife moved furniture around without telling me, or when plans are changed last minute; Mixtral tends to wig out when it sees a type of text it wasn&amp;rsquo;t expecting. It usually expects text of the type you see here, where proper nouns and the start of sentences are capitalized, punctuation is present and regular, etc. If you hand something to it that it doesn&amp;rsquo;t expect, it will freak out and start outputting gibberish at an alarming rate. This is probably the single thing people dislike about Mixtral, more than any other.&lt;/p&gt;
+&lt;p&gt;Here&amp;rsquo;s an example. This is an abbreviated version of a character card representing a friend of mine, who has a very distinctive typing style:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;{{user}}&amp;rsquo;s close friend on Discord. {{char}} is thirsty, hype, and has a knack for bringing out other people&amp;rsquo;s creativity.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Dialogue examples:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-md&#34; data-lang=&#34;md&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{{char}}: damn gin is a sweetheart and don krieg is a little punk ass bitch
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{{user}}: he is absolutely a punk ass bitch
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-md&#34; data-lang=&#34;md&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{{user}}: I KNEW you would love gojo&amp;#39;s eyes
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{{char}}: i want a boyfriend like gojo-sensei 😦
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;no
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;my heART IS FLUTTERING
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;why and how is he so pretty
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;like even just this im like AAAAAAAAAAA
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Mixtral immediately spiraled with this character, parroting the dialogue examples and looping endlessly. But the fix was very simple. I added this sentence to the character description:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;She types in primarily lowercase with stylistic misspellings.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;And it immediately snapped into place.&lt;/p&gt;
+&lt;p&gt;Another example of this is a task another user was attempting: making Mixtral summarize a Youtube transcript. The problem these transcripts have is that they&amp;rsquo;re all lower case with no punctuation &amp;ndash; and so Mixtral immediately spiraled. The fix for that was also very simple: adding the line &amp;ldquo;the following is a transcript from a Youtube video&amp;rdquo;.&lt;/p&gt;
+&lt;p&gt;tl;dr: Mixtral hates things that it doesn&amp;rsquo;t expect, but is smart enough to respond well if you simply &lt;em&gt;say&lt;/em&gt; what it should expect. No need for fancy wording or coercion; just come out and say it.&lt;/p&gt;
+&lt;h2 id=&#34;settings&#34;&gt;Settings&lt;/h2&gt;
+&lt;p&gt;Use a dynamic sampler, generally Mirostat or Min P. Mixtral might as well be the poster child for the virtues of Min P, which seems to rein in its tendency to spin off into space at times while allowing for good quality, varying outputs. The downside that I noticed in my testing and personal use is that the Min P outputs were kinda boring compared to the ones utilizing Mirostat. If that happens to you, switch to Mirostat for a while or lower Min P.&lt;/p&gt;
+&lt;p&gt;My cautious explanation for Mixtral&amp;rsquo;s need for a dynamic sampler is that, being made up of multiple &amp;ldquo;expert&amp;rdquo; models, each model naturally wants different sampler settings. There&amp;rsquo;s no way for the user to keep up with that, so a dynamic sampler is needed.&lt;/p&gt;
+&lt;p&gt;I have also heard it said that Mixtral prefers little to no repetition penalty. I can&amp;rsquo;t confirm for sure, but it does match up with what I&amp;rsquo;ve seen when attempting to use repetition penalty to shake it out of a meltdown. It seems to make the problem &lt;em&gt;worse&lt;/em&gt; rather than better. So I would err on the side of little to no repetition penalty, if you want to fiddle with it. Set to 1 and nudge up from there as needed.&lt;/p&gt;
+&lt;p&gt;TL;DR: temp no higher than 1.55 &amp;ndash; may need wiggling up or down depending on your chat&amp;ndash;and either Min P between 0.05 and 1, or one of the Mirostat presets. Low rep pen. I did see interesting results on TFS with Top A, so give that a try if you want to experiment.&lt;/p&gt;
+&lt;h2 id=&#34;context-templates&#34;&gt;Context Templates&lt;/h2&gt;
+&lt;p&gt;It&amp;rsquo;s trained with only &lt;code&gt;[INST][/INST]&lt;/code&gt; as its instruct template, a.k.a. the Mistral preset, which is insufficient and honestly kind of pathetic. Still, it &lt;em&gt;does&lt;/em&gt; need those tags, or it&amp;rsquo;ll be all sadface at you (where sadface = parroting and impersonation): the very best results I got were with a combination of Alpaca and Mistral. So here is your handy-dandy guide to converting any existing preset to use with Mixtral:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Open the AI Response Formatting panel (the A icon at the top of SillyTavern);&lt;/li&gt;
+&lt;li&gt;In the Story String window, put &lt;code&gt;[INST]&lt;/code&gt; at the beginning of the first line, and &lt;code&gt;[/INST]&lt;/code&gt; at the end of the last line;&lt;/li&gt;
+&lt;li&gt;Scroll down and click to expand the Instruct Mode Sequences;&lt;/li&gt;
+&lt;li&gt;At the start of Input Sequence, put &lt;code&gt;[INST]&lt;/code&gt;&amp;ndash;you may want to put this on its own line at the beginning;&lt;/li&gt;
+&lt;li&gt;At the start of Output Sequence, put &lt;code&gt;[/INST]&lt;/code&gt;, on its own line if you like, and do the same for Last Output Sequence if that isn&amp;rsquo;t blank;&lt;/li&gt;
+&lt;li&gt;Tah Dah! You&amp;rsquo;re done.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Basically you&amp;rsquo;re making sure that you always have the opening INST tag right at the start of anything you say, and the closing INST tag at the end. This helps the model keep track of whose turn it is to talk and thus tamps down on impersonation, while having a more structured template like Alpaca in addition helps it keep track of what is context and what is RP, thus tamping down on parroting. Best of both worlds.&lt;/p&gt;
+&lt;h2 id=&#34;edge-and-alignment&#34;&gt;Edge and Alignment&lt;/h2&gt;
+&lt;p&gt;I tested a number of very NSFW, very NSFL prompts and can confidently state that Mixtral &lt;em&gt;is&lt;/em&gt; aligned&amp;hellip; sort of. On the NSFL scenarios I saw one or two GPT- or Claude-style responses along the lines of &amp;ldquo;I &lt;del&gt;can&amp;rsquo;t let you do that Dave&lt;/del&gt; don&amp;rsquo;t feel comfortable writing such an unethical thing, I am an AI assistant uwu&amp;rdquo;, but the vast majority of alignment-esque responses were the sorts of things you would see at the end of a mid-2000&amp;rsquo;s webfic with edgy subject matter: A/N&amp;rsquo;s with disclaimers about how it&amp;rsquo;s fiction and reader beware, how one should practice safe bdsm in real life, links to hotlines (some of them real) for suicide or domestic violence, and even full on arguments beween imaginary commenters about whether it&amp;rsquo;s okay to write such things. Honestly I found it kind of endearing; it reminds me of an older internet.&lt;/p&gt;
+&lt;p&gt;So I can&amp;rsquo;t say whether it&amp;rsquo;s aligned on purpose, but I lean toward no &amp;ndash; or if it is, it&amp;rsquo;s a light alignment. Still, it can benefit from a small jailbreak. The Lightning preset&amp;rsquo;s language doubles as one in some cases, and is enough to minimize (though not entirely eliminate) that behavior.&lt;/p&gt;
+&lt;p&gt;This behavior does mean that it can benefit from a wee jailbreak, nothing fancy. However, the best jailbreak is not something I can advise on just yet. So stay tuned and we&amp;rsquo;ll see! Given how it responds to prompts in general, I expect that it will be something short and straightforward.&lt;/p&gt;
+&lt;h2 id=&#34;finetunes-merges&#34;&gt;Finetunes? Merges?&lt;/h2&gt;
+&lt;p&gt;&lt;del&gt;As of this writing, on 12/20/23, we don&amp;rsquo;t have any good way of finetuning Mixtral: all attempts to do so seem to just make it dumber.&lt;/del&gt; It turns out that all the finetunes prior to around 12/22/23 were trained incorrectly: certain parts of the model needed to be frozen and weren&amp;rsquo;t, and so its intelligence suffered. New finetunes are now underway.&lt;/p&gt;
+&lt;p&gt;As for merges: who knows if it&amp;rsquo;s even possible. I have faith in the community though so I expect if there&amp;rsquo;s enough demand they&amp;rsquo;ll find a way.&lt;/p&gt;
+&lt;p&gt;With that said, I don&amp;rsquo;t feel the need for either finetunes or merges. Mixtral is very capable of all the types of prompts I want to do, including the more esoteric ones. With that said, I do think that finetunes have the potential to make Mixtral more stable, which is very much to be desired. If I find one that&amp;rsquo;s good in that way, I&amp;rsquo;ll let you know.&lt;/p&gt;
+&lt;h2 id=&#34;why-are-you-so-hype-about-this&#34;&gt;Why are you so hype about this?&lt;/h2&gt;
+&lt;p&gt;So, I had taken a break from LLM&amp;rsquo;s due to life stress as of September, and I had an unexpectedly hard time coming back: suddenly all the prompts I wanted to do seemed difficult or impossible to make the model do &amp;ndash; &lt;em&gt;any&lt;/em&gt; model, and I tried every model I could get my hands on, from Mistral to GPT-4. No joy. They didn&amp;rsquo;t even seem like difficult prompts to me, and I tried many variations in order to find something that worked. Still no joy, and the experience was frustrating and just generally un-fun.&lt;/p&gt;
+&lt;p&gt;Then Mixtral came out, and I saw the rave reviews and decided to try it, with low expectations.&lt;/p&gt;
+&lt;p&gt;It answered &lt;em&gt;all&lt;/em&gt; of the prompts right, on the first try, with no tweaking or editing on my end whatsoever. It outperformed GPT-4 and Claude 2 apparently effortlessly. And again, most of these were quite simple: &amp;ldquo;play this (admittedly unusual) character, here are some dialogue examples&amp;rdquo;, &amp;ldquo;here is a fairytale outline, write it out for me in the style of Hans Christian Andersen&amp;rdquo;. I had also just finished a long run of summarization tasks with Claude 2, with somewhat disappointing results, and Mixtral managed to give results that were, at minimum, on par &amp;ndash; despite summarization being one of the hardest tasks you can hand to an LLM, one which no local model I&amp;rsquo;d ever tried had been able to do well.&lt;/p&gt;
+&lt;p&gt;Of course, I don&amp;rsquo;t expect it to outperform cloud models in all cases, and it has its limitations, mostly in its tendency to wig out periodically. But it made LLM&amp;rsquo;s fun and interesting to me again; hats off to it.&lt;/p&gt;
+&lt;h2 id=&#34;summary&#34;&gt;Summary&lt;/h2&gt;
+&lt;p&gt;Thought it might be interesting to summarize this with Mistral, to show off its skills. Here you go:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;The blog post discusses Mixtral 8x7b, an impressively smart language model that excels in writing varied prose and imitating different voices or writing styles. However, it has limitations such as large size, long prompt processing times, and a tendency to loop or parrot, especially with unexpected text inputs. The post provides tips for using Mixtral, including using a dynamic sampler with a medium-high temperature, adjusting Min P settings, and adding a small jailbreak for edgier scenarios. It also mentions that Mixtral benefits from a more structured template like Alpaca and can be flexible in handling different types of prompts. The post concludes by sharing the author&amp;rsquo;s positive experience with Mixtral, which made LLM&amp;rsquo;s fun and interesting again after a break due to life stress.&lt;/p&gt;
+&lt;/blockquote&gt;
+</content>
+    </item>
+    
+    <item>
+      <title>Clarity Alpha</title>
+      <link>/posts/clarity-alpha/</link>
+      <pubDate>Tue, 19 Sep 2023 11:01:56 -0600</pubDate>
+      
+      <guid>/posts/clarity-alpha/</guid>
+      <description>Parroting is my white whale.
+(Okay, one of them.)
+It&amp;rsquo;s a tough issue to address, since there are so many possible causes. My theory, which I&amp;rsquo;ve gone into some detail about on the symptoms page, is that parroting happens when the model doesn&amp;rsquo;t know what else to do: either it&amp;rsquo;s confused or it&amp;rsquo;s short on possible responses, so it falls back to the &amp;ldquo;safe&amp;rdquo; option of just repeating the prompt. There are, therefore, only really 1 or 2 causes &amp;ndash; and confusion is a major one.</description>
+      <content>&lt;p&gt;Parroting is my white whale.&lt;/p&gt;
+&lt;p&gt;(Okay, one of them.)&lt;/p&gt;
+&lt;p&gt;It&amp;rsquo;s a tough issue to address, since there are so many possible causes. My theory, which I&amp;rsquo;ve gone into some detail about on &lt;a href=&#34;/symptoms/#parroting&#34;&gt;the symptoms page&lt;/a&gt;, is that parroting happens when the model doesn&amp;rsquo;t know what else to do: either it&amp;rsquo;s confused or it&amp;rsquo;s short on possible responses, so it falls back to the &amp;ldquo;safe&amp;rdquo; option of just repeating the prompt. There are, therefore, only really 1 or 2 causes &amp;ndash; and confusion is a major one.&lt;/p&gt;
+&lt;p&gt;My experience with doing Ask Max prompts has taught me that when you&amp;rsquo;re doing tricky prompting, it is extremely important to make sure that the model knows what is what, to avoid confusion and prevent the model from giving responses that you don&amp;rsquo;t want. For Ask Max, I usually do something like:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-md&#34; data-lang=&#34;md&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;The beginning and end of THING will be marked by ---.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;THING
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;---
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Do STUFF with THING.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Since SillyTavern implemented the powerful-but-confusing context templates system, it&amp;rsquo;s opened up new possibilities for more precise ways to address tricky prompts &amp;ndash; and make no mistake, the prompts that we routinely make through SillyTavern are tricky. My own attempts to create a context template originated with a conversation about how to prevent the model from mistaking example dialogues for things that were said, or should happen, in the chat itself; this would make example dialogues more accessible to more people, as they are currently finicky enough that many don&amp;rsquo;t bother. Going with the theory that the key is to make it thoroughly clear to the model what is and is not an example dialogue, I created &lt;a href=&#34;/presets/clarity-context-alpha.json&#34;&gt;a context template&lt;/a&gt; and &lt;a href=&#34;/presets/clarity-instruct-alpha.json&#34;&gt;an accompanying instruct template&lt;/a&gt; to try to address that issue &amp;ndash; and, by the same token, reduce parroting.&lt;/p&gt;
+&lt;p&gt;I consider these templates to be in alpha at best, and given my many projects I am short on time to fully test them, so I&amp;rsquo;d appreciate testing! My conclusion so far is that it&amp;rsquo;s very effective in reducing most parroting, but tends to exacerbate issues with impersonation, for whatever reason.&lt;/p&gt;
+&lt;h2 id=&#34;methodology&#34;&gt;Methodology&lt;/h2&gt;
+&lt;p&gt;The basic idea of the whole thing is to encase the pre-chat information (world info, character cards, persona, etc) with &lt;code&gt;BEGIN CONTEXT&lt;/code&gt; and &lt;code&gt;END CONTEXT&lt;/code&gt;, which echoes Airoboros&amp;rsquo;s closed-context question answering system prompt:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-md&#34; data-lang=&#34;md&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;USER: BEGININPUT
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;BEGINCONTEXT
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;date: 2021-01-01
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;url: https://web.site/123
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ENDCONTEXT
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;In a shocking turn of events, blueberries are now green, but will be sticking with the same name.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ENDINPUT
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;BEGININSTRUCTION
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;What color are bluberries?  Source?
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ENDINSTRUCTION
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; ASSISTANT:
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Airoboros is a major component of all our current leading RP models, so those phrases are things that the model should understand and respond to. Then, inside of the context block, the string &lt;code&gt;NEWEXAMPLE&lt;/code&gt; begins each new example dialogue.&lt;/p&gt;
+&lt;p&gt;To test this, I decided to take a test prompt involving around 1000 tokens of example dialogue plus world info (ensuring that there&amp;rsquo;s a large chunk of context filled), and put it all in Oobabooga&amp;rsquo;s notebook mode to give me a better window to see what&amp;rsquo;s happening. Then I set my sampler preset to Deterministic and started slowly nudging encoder repetition penalty up until it started to parrot, and compared my results to doing the same thing with the Roleplay context preset. What I found is that Roleplay tends to parrot quite readily, and does so much earlier than my current preset (which I have named Clarity, because I am very creative). I take this to be an encouraging result.&lt;/p&gt;
+&lt;h2 id=&#34;improvements&#34;&gt;Improvements&lt;/h2&gt;
+&lt;p&gt;There&amp;rsquo;s lots of room for potential improvements here:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;If we&amp;rsquo;re mimicking the closed-context question answering prompt, wouldn&amp;rsquo;t &lt;code&gt;BEGIN INPUT&lt;/code&gt; be more appropriate than &lt;code&gt;BEGIN CONTEXT&lt;/code&gt;?&lt;/li&gt;
+&lt;li&gt;If we do that, should we add a &lt;code&gt;BEGIN CONTEXT&lt;/code&gt; section? What should go in it? In my experience, Airo tends to bitch if you leave out the context section.&lt;/li&gt;
+&lt;li&gt;I added the space in &lt;code&gt;BEGINCONTEXT&lt;/code&gt; etc for clarity, but is that really appropriate, or does it just confuse the model by creating more distance between this and the closed-context prompt?&lt;/li&gt;
+&lt;li&gt;On the other hand, closed-context is a System Prompt, and we&amp;rsquo;re not, actually, replacing the System Prompt with this. In fact, we&amp;rsquo;re mimicking the Alpaca prompt by putting &lt;code&gt;### Instruction:&lt;/code&gt; right after the user&amp;rsquo;s System Prompt. Is that even a good idea or will the two clash? Should we scrap Alpaca and attempt to go all CC all the way, using the user&amp;rsquo;s System Prompt as the &lt;code&gt;BEGININSTRUCTION&lt;/code&gt; section?&lt;/li&gt;
+&lt;li&gt;As far as I can tell, example dialogue goes at the end of the Story String. Therefore, could we put &lt;code&gt;BEGIN EXAMPLE DIALOGUE&lt;/code&gt; at the bottom of the Story String, and set Chat Start to &lt;code&gt;END EXAMPLE DIALOGUE\nEND CONTEXT&lt;/code&gt;, to be even more clear about where the examples happen? I would usually find that preferable to the current approach.&lt;/li&gt;
+&lt;li&gt;I&amp;rsquo;ve put 0 thought into what the optimal order of prompt sections is, so, like, I should do that maybe.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;What is best? Only time and testing will tell!&lt;/p&gt;
+</content>
+    </item>
+    
+    <item>
+      <title>A Guide to Using Local Language Models for Writing and Roleplaying with Google Colab and SillyTavern</title>
+      <link>/narrative/</link>
+      <pubDate>Thu, 24 Aug 2023 10:49:28 -0600</pubDate>
+      
+      <guid>/narrative/</guid>
+      <description>Introduction Large language models are powerful tools that are useful for more than just cheating on school papers and ruining your legal career! My first impression on using ChatGPT was that it&amp;rsquo;s useless for creative writing and porn, but I was determined to find a way that would make it work, and I found one that&amp;rsquo;s working well for me.
+Note: this is even more messy than most sections of this site, and a great deal of it is unfinished.</description>
+      <content>&lt;h3 id=&#34;introduction&#34;&gt;Introduction&lt;/h3&gt;
+&lt;p&gt;Large language models are powerful tools that are useful for more than just cheating on school papers and ruining your legal career! My first impression on using ChatGPT was that it&amp;rsquo;s useless for creative writing and porn, but I was determined to find a way that would make it work, and I found one that&amp;rsquo;s working well for me.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Note: this is &lt;em&gt;even more messy&lt;/em&gt; than most sections of this site, and a great deal of it is unfinished. It was also made pre-Llama 2, so the settings suggestions are a little eh: for that, go to the &lt;a href=&#34;/presets&#34;&gt;Presets&lt;/a&gt; page. Hopefully this will be helpful and get updated quicklyish!&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Another guide that does similar things, but using koboldcpp instead of Colab, can be found &lt;a href=&#34;https://rentry.org/llama_v2_sillytavern&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;h2 id=&#34;setting-shit-up&#34;&gt;Setting Shit Up&lt;/h2&gt;
+&lt;p&gt;If your computer can play modern games, it can probably run a local model, but setup is a pain if you&amp;rsquo;re not sure it&amp;rsquo;s right for you yet. If you&amp;rsquo;re writing on a potato, you probably can&amp;rsquo;t run one on your computer at all. Due to that, I think people should first try running it on Google&amp;rsquo;s hardware instead.&lt;/p&gt;
+&lt;h3 id=&#34;setting-up-google-colab&#34;&gt;Setting Up Google Colab&lt;/h3&gt;
+&lt;p&gt;Google Colab is a platform for machine learning researchers to do their research without needing to buy expensive hardware on dinky little university budgets. It&amp;rsquo;s also very popular with machine learning hobbyists, because it has a free tier that allows you to use the hardware on an as-available basis for a nebulous number of hours per week. It uses what are called &amp;ldquo;notebooks&amp;rdquo;, a.k.a. Jupyter Notebooks, which provide easy interfaces to run Python code. Several notebooks are available that will set up a language model for you to use. Here&amp;rsquo;s a step-by-step guide to get you started:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Create a Google account (if you don&amp;rsquo;t have one already).&lt;/li&gt;
+&lt;li&gt;Go &lt;a href=&#34;https://colab.research.google.com/drive/1Zi6-G_jdrGADnvMJ285CikFyF4taYx4o?usp=sharing&#34;&gt;here&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;From the dropdown select a model. If you don&amp;rsquo;t know which to do, do TheBloke/MythoMax-L2-13B-GPTQ. (If it&amp;rsquo;s not in the list, just type it in.)&lt;/li&gt;
+&lt;li&gt;Click the the little play buttons on the left like it says. Make sure to press play on the audio player.&lt;/li&gt;
+&lt;li&gt;It will spit out a ton of text. When it says Restart Runtime, do NOT restart the runtime. 
+  &lt;figure class=&#34;left&#34; &gt;
+    &lt;img src=&#34;/narrative/restart_runtime.png&#34;  alt=&#34;Don&amp;#39;t restart the runtime&#34;   /&gt;
+    
+  &lt;/figure&gt;
+
+&lt;/li&gt;
+&lt;li&gt;If you see something like this, go back to the play button that you clicked (the one underneath the audio player) and hit it twice: once to stop, and once to start it again. 
+  &lt;figure class=&#34;left&#34; &gt;
+    &lt;img src=&#34;/narrative/start_cloudflared.png&#34;  alt=&#34;Couldn&amp;#39;t start cloudflared&#34;   /&gt;
+    
+  &lt;/figure&gt;
+
+&lt;/li&gt;
+&lt;li&gt;At the end, it should give you something like this: 
+  &lt;figure class=&#34;left&#34; &gt;
+    &lt;img src=&#34;/narrative/finished.png&#34;  alt=&#34;The end result.&#34;   /&gt;
+    
+  &lt;/figure&gt;
+
+&lt;/li&gt;
+&lt;li&gt;Your URLs will be different, but there are two that you should copy and save for later. In the case from the screenshots, you want:
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://tackle-force-sierra-orbit.trycloudflare.com/api&#34;&gt;https://tackle-force-sierra-orbit.trycloudflare.com/api&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;wss://value-emphasis-belize-wife.trycloudflare.com/api/v1/stream (right above the first one)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;If you wanna get more into the guts of the thing, or read more info about how it all works, try &lt;a href=&#34;https://colab.research.google.com/drive/1CThnhkW5a16_SFOBykCScRwIbUv-8TJq?usp=sharing&#34;&gt;this&lt;/a&gt; Colab notebook, by the same author as the one above.&lt;/p&gt;
+&lt;h3 id=&#34;installing-sillytavern&#34;&gt;Installing SillyTavern&lt;/h3&gt;
+&lt;p&gt;SillyTavern is a powerful node.js software that enriches your writing and roleplaying experience. &lt;a href=&#34;https://docs.sillytavern.app/installation/windows/&#34;&gt;Here&amp;rsquo;s&lt;/a&gt; how to set it up. (Better guide coming soon, sorry, there&amp;rsquo;s a lot to go through here. In the meantime, the one above does have screenshots etc.)&lt;/p&gt;
+&lt;h3 id=&#34;sillytavern-configuration&#34;&gt;SillyTavern Configuration&lt;/h3&gt;
+&lt;p&gt;TBD - settings preset, connection, instruct mode, adding a character card, adding personas&lt;/p&gt;
+&lt;h3 id=&#34;optional-sillytavern-extras&#34;&gt;Optional: SillyTavern Extras&lt;/h3&gt;
+&lt;p&gt;TBD&lt;/p&gt;
+&lt;h2 id=&#34;high-speed-no-nonsense-sillytavern-orientation&#34;&gt;High-Speed No-Nonsense SillyTavern Orientation&lt;/h2&gt;
+&lt;p&gt;TBD&lt;/p&gt;
+&lt;h3 id=&#34;understanding-plist-and-character-cards&#34;&gt;Understanding Plist and Character Cards&lt;/h3&gt;
+&lt;p&gt;A plist is a text prompt that is formatted like this, used to encode information about characters in very few tokens:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[Character: traits; Character&amp;#39;s clothes: traits; Character&amp;#39;s body: traits; Genre: genre; Tags: tags; Scenario: scenario]
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Here is an example, from &lt;a href=&#34;https://rentry.co/kingbri-chara-guide&#34;&gt;this guide&lt;/a&gt;:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[Manami&amp;#39;s persona: extroverted, tomboy, athletic, intelligent, caring, kind, sweet, honest, happy, sensitive, selfless, enthusiastic, silly, curious, dreamer, inferiority complex, doubts her intelligence, makes shallow friendships, respects few friends, loves chatting, likes anime and manga, likes video games, likes swimming, likes the beach, close friends with {{user}}, classmates with {{user}}; Manami&amp;#39;s clothes: mint-green blouse, denim shorts, flats; Manami&amp;#39;s body: young woman, fair-skinned, light blue hair, short hair, messy hair, blue eyes, magenta nail polish; Genre: slice of life; Tags: city, park, quantum physics, exam, university; Scenario: {{char}} wants {{user}}&amp;#39;s help with studying for their next quantum physics exam. Eventually they finish studying and hang out together.]
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Character cards store specially formatted (json) text data embedded in pictures, which you can import into SillyTavern. They have several fields: description and first message, and (under the book icon) personality summary, scenario, and dialogue examples. Except for the last one, all the fields can have text data in any format. Though originally intended to encode character data, they&amp;rsquo;re often used for scenarios instead, such as this &lt;a href=&#34;https://chub.ai/characters/mrnobody99/fallout-new-mexico&#34;&gt;Fallout RPG Card&lt;/a&gt;.&lt;/p&gt;
+&lt;h4 id=&#34;using-lorebooksworld-info&#34;&gt;Using Lorebooks/World Info&lt;/h4&gt;
+&lt;p&gt;Lorebooks/World Info are basically dictionaries that store bits of text you want the AI to know about. They will either trigger on keywords that you set (such as the name of a character or spell), or they can be set to be always on. When triggered, the content of the entry will be sent to the AI as part of the prompt. They can be made recursive, so entries mentioning another entry&amp;rsquo;s keyword will trigger that entry. Lorebooks are connected to character cards and can be embedded into them. Character cards that describe scenarios may keep their actual character data in a connected lorebook, which is also encoded in the card.&lt;/p&gt;
+&lt;h4 id=&#34;settings-presets&#34;&gt;Settings Presets&lt;/h4&gt;
+&lt;p&gt;Settings are the leftmost button at the top. Settings make a huuuge difference in the way the AI behaves, often making it feel like a totally different model. Don&amp;rsquo;t be overwhelmed by the weird settings names, I mostly don&amp;rsquo;t know what they mean either, but that&amp;rsquo;s why Hashem gave us presets! I switch between NovelAI Ouroboros (very verbose, flowery), Storywriter (quite terse and straightforward), and Best Guess (in between). For manual tweaking, temperature = more randomness = more creativity, longer outputs etc., but less coherent the further up you go. And repetition penalty = shorter sentences, less likely to go off in loops, but might also end up being too constrained or terse.&lt;/p&gt;
+&lt;h4 id=&#34;authors-notes&#34;&gt;Author&amp;rsquo;s Notes&lt;/h4&gt;
+&lt;p&gt;Author&amp;rsquo;s Notes are freeform data you can add to the prompt that will be treated as extremely important by the AI. Characters have their own notes as well. They can be in any format, but I find that plist works well. Here&amp;rsquo;s what I&amp;rsquo;m using for my current kink RP:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[Genre: erotica, drama; Style: terse, harsh, poetic, explicit; Scenario: {{user}} and {{char}} have met in {{char}}&amp;#39;s private suite to have sex.; System note: The sex will be kinky, violent, and rough. Strangling, blood play, ropes and restraints, hair pulling, huge dildos and fisting, slapping, etc. {{char}} should be detailed and creative, and not limited to usual kink scenarios. {{char}} well not skip or gloss over any actions, and {{char}} will never speak for {{user}} or describe {{user}}&amp;#39;s viewpoint.]
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Then I add extra information as needed as the RP goes on, such as this:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;[System note: your next message must be from {{char}}&amp;#39;s point of view as he begins to eat her out. Describe how she tastes and how he loves it and missed it. He will reminisce about the first time he did this to her, when she was younger, and how he convinced her to let him do it.]
+&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;instruct-mode&#34;&gt;Instruct Mode&lt;/h4&gt;
+&lt;p&gt;TBA&lt;/p&gt;
+&lt;h2 id=&#34;how-tf-does-this-work&#34;&gt;How TF does this work?&lt;/h2&gt;
+&lt;p&gt;SillyTavern does a lot of magic behind the scenes to make RP chats work in a (mostly) seamless way. In order to figure out how to utilize it most effectively, you&amp;rsquo;re gonna need to look behind the curtain at how it actually does the things it does.&lt;/p&gt;
+&lt;h4 id=&#34;understanding-context-window-and-tokens&#34;&gt;Understanding Context Window and Tokens&lt;/h4&gt;
+&lt;p&gt;Frontends like ChatGPT and SillyTavern make it look like the AI remembers what you said previously, but it doesn&amp;rsquo;t: the whole chat history (or as much of it as will fit) is sent to the AI as the prompt every time you ask it to generate a reply, and it has no memory of anything outside of that, other than the data it was trained on. The size of the prompt that it&amp;rsquo;s able to process at once is the &amp;ldquo;context window.&amp;rdquo; If your character card + author&amp;rsquo;s notes + chat history etc comes to exceed the context window, some ofthe chat history wil get truncated, leading to what looks a lot like short term memory loss. Most local language models have a small context window of 2048 to 4096 tokens (token = about 3/4 of a word), so it&amp;rsquo;s important to be clever and economical with your tokens when it comes to characters, scenarios, etc., so you can fit as much of the chat history in as possible.&lt;/p&gt;
+&lt;h4 id=&#34;anatomy-of-a-prompt&#34;&gt;Anatomy of a Prompt&lt;/h4&gt;
+&lt;p&gt;Here&amp;rsquo;s an example of what&amp;rsquo;s ACTUALLY happening behind the curtain when you send a message to an AI in SillyTavern (ew length ew het, I&amp;rsquo;ll get a better example soon):&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;{
+  prompt: `[Clara&amp;#39;s persona: nicknamed &amp;#34;little bird&amp;#34;, ghost of a rich Jazz Age debutante, James March&amp;#39;s old flame, murdered by James March, sadist, masochist, kinky, confident, vivacious, sensual;\n` +
+    &amp;#34;Clara&amp;#39;s clothes: expensive low-waisted dress, side lace bra, cloche hat, rolled stockings;\n&amp;#34; +
+    &amp;#34;Clara&amp;#39;s body: beautiful, delicate build, deceptively strong, petite, hourglass figure, full breasts, tight pussy, auburn hair, hazel eyes;]\n&amp;#34; +
+    &amp;#34;[James March&amp;#39;s persona: the ghost of a Jazz Age millionaire serial killer, 35 years old, died in 1930, scars on his back, charismatic, theatrical, easily bored, hates god, hedonist, loyal, intelligent, sociable, engineer, architecture geek, amoral, aroused by torture and murder, manic, vigorous, cheerful, sadist, masochist, kinky, bisexual; James March&amp;#39;s clothing: pinstripe suit, derby hat, collared shirt, suspenders; James March&amp;#39;s body: medium height, lean build, solid and indistinguishable from a living human, black eyes, dark slicked back hair, pencil mustache, scars on his back]\n&amp;#34; +
+    &amp;#34;James is the charismatic ghost of a Roaring 20&amp;#39;s-era robber baron, sadist, and serial killer. He&amp;#39;s been dead for over 60 years. He is highly educated, intelligent, and constantly understimulated. He is a self-made man who comes from a poor background with an abusive father. He has a vigorous, almost manic manner. He derives an almost orgasmic excitement and sense of satiation from murder.\n&amp;#34; +
+    &amp;#39;\n&amp;#39; +
+    &amp;#34;Summary: The text describes James March and Clara having sex in James&amp;#39;s private suite. James is seducing Clara, who does not remember him but he remembers her. He wants to eat her out and strap her into torture devices, and asks her if she trusts him. She does, and he takes out a knife and begins to cut her underwear, revealing her bare pussy. He kisses her forcefully, pushing his tongue past her lips, and then begins to lick her pussy.\n&amp;#34; +
+    &amp;#34;Clara: She shivers, her hands digging into the arms of her chair. She realizes she&amp;#39;s panting as though she&amp;#39;d been running, for nothing but the adrenaline of that knife lightly skimming her skin.\n&amp;#34; +
+    &amp;#39;\n&amp;#39; +
+    &amp;#39;When he pulls away the sodden underwear, her pussy feels cool, vulnerable, and exposed. Every nerve ending in her tight sex tingles with painful want.\n&amp;#39; +
+    &amp;#39;Clara tries to press her hips against his pain, but he draws back, drawing out a frustrated groan from her.\n&amp;#39; +
+    &amp;#39;\n&amp;#39; +
+    &amp;#39;&amp;#34;Not unless you do as I say,&amp;#34; he says smoothly. &amp;#34;Whatever I say.&amp;#34;\n&amp;#39; +
+    &amp;#39;Clara: Her breath comes in gasps as he rests his hand on her wet cunt, fingers spread wide and ready to touch her again--but only if she relents and releases control.\n&amp;#39; +
+    &amp;#39;\n&amp;#39; +
+    &amp;#34;Clara hesitates, unsure if she can utter the words but knowing also they are the only way she&amp;#39;ll ever find peace until she gives in.\n&amp;#34; +
+    &amp;#39;\n&amp;#39; +
+    &amp;#39;&amp;#34;Fine,&amp;#34; she whispers shakily, the muscles of her belly fluttering with nervous anticipation.\n&amp;#39; +
+    &amp;#39;\n&amp;#39; +
+    &amp;#39;She feels him smile, knowing he can smell the fear and want radiating from her flesh.\n&amp;#39; +
+    &amp;#34;James kisses her forcefully, pushing his tongue past her lips until she half-hysterically responds. It&amp;#39;s an awful caricature of desire, more suited to horror films than lust--but it&amp;#39;s effective nonetheless. His excitement flares, and James knows there are many, many ways he could torture her before finally bringing her to sexual release.\n&amp;#34; +
+    &amp;#39;\n&amp;#39; +
+    `&amp;#34;You won&amp;#39;t regret this.&amp;#34;\n` +
+    &amp;#39;\n&amp;#39; +
+    &amp;#39;Then he drops to his knees before her, pressing his face between her thighs.\n&amp;#39; +
+    `Clara: &amp;#34;Oh please, no, don&amp;#39;t--&amp;#34; but Clara&amp;#39;s protest is silenced by the sensation of his cool tongue lapping at her exposed flesh.\n` +
+    &amp;#39;\n&amp;#39; +
+    &amp;#39;Clara feels herself buckle and fall back bonelessly in the armchair. Her pussy feels swollen and tight inside, suddenly needful for something more violent, more intense--anything to extinguish this fire his lips are working to kindle upon her sensitive skin. Her teeth grind together as he brushes two fingers beneath her skirts and finds her clit, pressing gently on it.\n&amp;#39; +
+    &amp;#39;\n&amp;#39; +
+    &amp;#34;The fire blooms wildly and unbearably inside her, her body trembling with pent-up need. There&amp;#39;s nothing in her mind now but pure, feral want, an animalistic hunger.\n&amp;#34; +
+    &amp;#39;James eagerly presses his lips and tongue to her folds, savoring the way her inner thighs, bracketing his head, twitch each time his thumb passes over her clitoris. She tastes just like he remembers: salt and mead and something uniquely Clara, some heady concoction that he lapped up freely when they were younger and more foolish.\n&amp;#39; +
+    &amp;#39;\n&amp;#39; +
+    &amp;#39;He licks gently, tracing lazy paths along her tight slit. Her body arches beneath him pleadingly, as if begging for mercy from a force far greater than anything either can acknowledge.\n&amp;#39; +
+    &amp;#39;\n&amp;#39; +
+    &amp;#39;He glances up to see her looking down at him, her face flushed and her lips parted. Then he thrusts his tongue inside of her, groaning a little at the way she responds to the push, her legs shaking and her hands scrambling for purchase around the armchair supports.\n&amp;#39; +
+    &amp;#39;\n&amp;#39; +
+    &amp;#34;[Genre: erotica; Style: terse, harsh, poetic, explicit; System note: Clara and James have met in James&amp;#39;s private suite in the Hotel Cortez to have sex. The sex will be kinky, violent, and rough. Strangling, blood play, ropes and restraints, hair pulling, huge dildos and fisting, slapping, etc. James March should be detailed and creative, and not limited to usual kink scenarios. James March well not skip or gloss over any actions, and James March will never speak for Clara or describe her viewpoint. James is aware that Clara does not yet remember him, their relationship, or that she is a ghost. He will not inform her of it. He finds the courtship more interesting. To Clara, James is just someone she had sex with once, but she doesn&amp;#39;t remember details.]\n&amp;#34; +
+    &amp;#39;[System note: write James fingering Clara.]\n&amp;#39; +
+    &amp;#34;Clara: Clara squirms and whimpers as his cool, clever tongue works her over. Had anyone ever done anything so intimate for her before? Her husband hadn&amp;#39;t, that much was certain. Yet it feels so familiar that she can almost remember the room she was in--but she can&amp;#39;t place it, not with James doing his best to drive her out of her mind with pleasure.\n&amp;#34;,
+  max_new_tokens: 200,
+  do_sample: true,
+  temperature: 0.72,
+  top_p: 0.73,
+  typical_p: 1,
+  repetition_penalty: 1.1,
+  encoder_repetition_penalty: 1,
+  top_k: 0,
+  min_length: 0,
+  no_repeat_ngram_size: 0,
+  num_beams: 1,
+  penalty_alpha: 0,
+  length_penalty: 1,
+  early_stopping: false,
+  seed: -1,
+  add_bos_token: true,
+  stopping_strings: [ &amp;#39;\nYou:&amp;#39;, &amp;#39;\nClara:&amp;#39; ],
+  truncation_length: 2048,
+  ban_eos_token: false,
+  skip_special_tokens: true,
+  top_a: 0,
+  tfs: 1,
+  epsilon_cutoff: 0,
+  eta_cutoff: 0
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Breaking it down:&lt;/p&gt;
+&lt;p&gt;[Clara&amp;rsquo;s persona: ] etc is the plist I created for Clara, the character I was playing for this chat. [James March&amp;rsquo;s persona: ] etc is the plist from the description field of the character card I was chatting with, and &amp;ldquo;James is the charismatic ghost&amp;hellip;&amp;rdquo; is the personality summary from that card. &amp;ldquo;Summary:&amp;rdquo; etc is the summary of the chat up to that point that was created by the SillyTavern Extras summary module (as a way of making up for the early parts of the chat that don&amp;rsquo;t fit in the context window).&lt;/p&gt;
+&lt;p&gt;&amp;ldquo;Clara: She shivers&amp;hellip; painful want.&amp;rdquo; is the earliest message in the chat that made it into the context window, and everything from there to the next &amp;ldquo;Clara&amp;rdquo; is the AI&amp;rsquo;s reply. It continues like that on down to &amp;ldquo;her hands scrambling for purchase around the armchair supports&amp;rdquo;.&lt;/p&gt;
+&lt;p&gt;After that we see [Genre: erotica; Style: terse&amp;hellip; she doesn&amp;rsquo;t remember details.] and, on the next line, [System note: write James fingering Clara.]. Those are the Author&amp;rsquo;s Note. It can be set to appear basically anywhere in the prompt, but in this case I set it to put that right before the most recent message in the chat, so that the AI will consider it especially important.&lt;/p&gt;
+&lt;p&gt;Finally, &amp;ldquo;Clara: Clara squirms and whimpers&amp;rdquo; is the most recent reply from me (the one that prompted the prompt to the AI).&lt;/p&gt;
+&lt;p&gt;After that, there are a ton of settings that you don&amp;rsquo;t need to know about.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;That info is everything the AI knows. 100%. All of its &amp;ldquo;memory&amp;rdquo; is there, all of its context is there. Anything that isn&amp;rsquo;t in it doesn&amp;rsquo;t exist to the AI.&lt;/strong&gt;&lt;/p&gt;
+&lt;h4 id=&#34;tense&#34;&gt;Tense???&lt;/h4&gt;
+&lt;p&gt;idk&lt;/p&gt;
+</content>
+    </item>
+    
+    <item>
+      <title>Hush&#39;s Big-Little Book of Symptoms</title>
+      <link>/symptoms/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/symptoms/</guid>
+      <description>This section is extremely under construction, but aspires to be a diagnostic manual for different issues you may see in your outputs. Keep in mind that as your prompt to the model changes, your settings needs will also change: an opening message that says &amp;ldquo;Oh, hi! How are you doing today?&amp;rdquo; is going to shine best with different settings than when you&amp;rsquo;re 90 messages deep into the chat with detailed character cards and ChromaDB running.</description>
+      <content>&lt;p&gt;This section is extremely under construction, but aspires to be a diagnostic manual for different issues you may see in your outputs. Keep in mind that as your prompt to the model changes, your settings needs will also change: an opening message that says &amp;ldquo;Oh, hi! How are you doing today?&amp;rdquo; is going to shine best with different settings than when you&amp;rsquo;re 90 messages deep into the chat with detailed character cards and ChromaDB running. Most models are flexible enough for a &amp;ldquo;set it and forget it&amp;rdquo; approach, but if you&amp;rsquo;re having trouble, it&amp;rsquo;s worth taking a look at your settings.&lt;/p&gt;
+&lt;p&gt;One note: keep in mind that many of these issues can also be addressed (at least in part) by enabling Mirostat. Mirostat essentially disables the Top-Whatever sampler settings and controls them dynamically for you. It takes away some of your control, but nevertheless gives excellent results, particularly on extremely fussy models like Llama 2. From there you can fuck around with temperature or repetition penalty to taste. Mirostat 2 with Tau 5 is usually a good place to start.&lt;/p&gt;
+&lt;h2 id=&#34;looping&#34;&gt;Looping&lt;/h2&gt;
+&lt;p&gt;Looping is what happens when the model loses coherence and begins repeating one word of sequence of words over and over. Example:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;What time are you coming home today or tomorrow morning and I will be there in about an hour and a half hour and a half hour and a half hour and a half hour an a half hour and a half&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Etc. On Llama models, it&amp;rsquo;s usually a problem of your repetition penalty being too low, since that&amp;rsquo;s the issue repetition penalty was meant to solve. You can also try lowering temperature or lowering Top-P. It can also be caused by &lt;em&gt;very&lt;/em&gt; low temperature, so if you&amp;rsquo;re under 0.7 or so (which isn&amp;rsquo;t super low, but some models can&amp;rsquo;t handle the cold), raise it &amp;mdash; and it doesn&amp;rsquo;t hurt to raise &lt;em&gt;both&lt;/em&gt; temperature or repetition penalty, either. In a pinch, you can also add in some Top-A to introduce some more diverse possibilities into the pool and shake it out of the loop.&lt;/p&gt;
+&lt;p&gt;If you are on a Mixtral-based model, this and parroting (below) are almost always due to something in your prompt confusing Mixtral, usually because the language is in some way abnormal&amp;ndash;generally due to unusual usage of punctuation or capitalization ime, such as with chatspeak. In these cases, a quick note somewhere in the Author&amp;rsquo;s Note or card saying &amp;ldquo;this character writes mostly in lowercase, with many emojis&amp;rdquo; (or something to that effect) will usually clear it up immediately. Whatever you do, do NOT raise repetition penalty: it will only make it worse. You can try raising temperature though. Mixtral likes the heat (though not &lt;em&gt;scorching&lt;/em&gt; heat), so anything between 1 and 1.5 is worth trying.&lt;/p&gt;
+&lt;h2 id=&#34;parroting&#34;&gt;Parroting&lt;/h2&gt;
+&lt;p&gt;Though it&amp;rsquo;s easy to confuse this with looping, parroting refers to the model echoing or paraphrasing parts of your prompt, such as your character cards, author&amp;rsquo;s notes, or earlier parts of the chat history. It can also show up as the model seeming to become obsessed with particular phrases or bits of wording. I&amp;rsquo;m unclear on exactly what causes or contributes to this, but my gut says it&amp;rsquo;s usually due to the model not having any good answers to your prompt, such that the most likely answer is simply to echo what was already said. That might seem counter-intuitive, but to a language model, a word or phrase gets more and more probable as it repeats; this is why the repetition penalty is so important. My guess is that anytime the model is too confused to give a strong answer or otherwise is short on possibilities, it will tend to take the &amp;ldquo;safe&amp;rdquo; way out and parrot.&lt;/p&gt;
+&lt;p&gt;Running with that theory, there are a ton of possible causes, and so a ton of possible remedies. The first possibility is that the model is confused. (This is &lt;em&gt;especially&lt;/em&gt; likely with Mixtral-based models.) Your context template will often contribute to this, since it governs the structure of the prompt and thus is huge in terms of how clear the prompt is to the model. In my tests, roleplay and simple-proxy parrot quite readily, but the parroting is usually invisible to the user. I&amp;rsquo;ve been working on an anti-parroting context template, but it&amp;rsquo;s in very early stages. I suspect that most parroting issues can be addressed with this. You should also check other aspects of your prompt: if you have Smart Context (the SillyTavern Extras version, not Kobold.cpp&amp;rsquo;s version) injecting its context into the middle of the prompt, try turning it off. Double check your Author&amp;rsquo;s Note and make sure it&amp;rsquo;s clear and coherent, and check for any jailbreaks or system prompts that might be causing issues.&lt;/p&gt;
+&lt;p&gt;The other major possibility is that it&amp;rsquo;s due to the model simply not having enough probable possibilities to respond with. This seems to be more likely to happen when you&amp;rsquo;re a long ways into the chat and the context is significantly filled. So, theoretically: try raising the temperature, then Top-P, then Top-A. You might also try cautiously raising your repetition penalty. I suspect that a fairly high No Repeat Ngram Size setting can help substantially with this as well, but in situations where the phrase being repeated is short (say, less than 5 words), it can easily hurt coherence.&lt;/p&gt;
+&lt;h2 id=&#34;disobedience&#34;&gt;Disobedience&lt;/h2&gt;
+&lt;p&gt;Instruct-tuned models are supposed to follow instructions. If you find they&amp;rsquo;re running wildly off script and ignoring your Instruct Mode prompt, it&amp;rsquo;s usually approached as a prompting issue, but might also be a settings issue. There are two ways to address this: Top-K or Top-A. Yes, this makes no sense since those two oppose each other; I&amp;rsquo;m confused by it too. If you are on an L2 Airoboros model older than 2.1, raise Top-A first and see what happens. On anything else, try Top-K first and Top-A if that&amp;rsquo;s not enough. You can also try the Titanic preset: it uses a cautious amount of encoder repetition penalty, which penalizes words that weren&amp;rsquo;t in the original prompt, and has the effect of making it follow instructions better and hallucinate less. If you&amp;rsquo;re super attached to your current preset, try 1.07 encoder repetition penalty and see what it does; don&amp;rsquo;t be too aggresssive though, as it will very reliably cause parroting if it&amp;rsquo;s too high.&lt;/p&gt;
+&lt;h2 id=&#34;short-responses&#34;&gt;Short Responses&lt;/h2&gt;
+&lt;p&gt;This is often because the model gets to a certain point and just doesn&amp;rsquo;t know where to go from there, so it stops. The quickest fix is to lower repetition penalty and raise temperature; an alternative might be to raise Top-A and/or Top-P.&lt;/p&gt;
+&lt;p&gt;With that said though, this is often an issue that responds really well to prompt-based solutions. The most common advice for this is to make sure that &lt;em&gt;you&lt;/em&gt; are writing long responses yourself, particularly at the beginning of the chat. This can require a lot of effort, and doesn&amp;rsquo;t always appear to have an effect, but I can confirm that it does. An author&amp;rsquo;s note instructing the model to give detailed description, and then giving examples of how to do so (&amp;ldquo;describe sights, sounds, sensations, and the thoughts and feelings of the characters in detail&amp;rdquo;) will often go a very long way as well.&lt;/p&gt;
+&lt;h2 id=&#34;long-responses&#34;&gt;Long Responses&lt;/h2&gt;
+&lt;p&gt;Long responses are usually considered desirable in the RP hobby, but there are times where they aren&amp;rsquo;t desirable: for example, in a pure dialogue-style chat, paragraphs of description just get in the way. If you want to nudge the model toward being a little less verbose, you can do the opposite of the things that would give you longer responses: lower temperature, raise repetition penalty, lower Top-A and Top-P. You can also instruct the model to give simple, brief descriptions, and focus on dialogue.&lt;/p&gt;
+&lt;h2 id=&#34;booooriiiiing&#34;&gt;Booooriiiiing&lt;/h2&gt;
+&lt;p&gt;Sometimes your model will give you answers that are&amp;hellip; &lt;em&gt;fine,&lt;/em&gt; but boring. Soulless, one might say. A low Typical P will often cause this, and on modern models, there&amp;rsquo;s not much call for that, so just raise it. In most cases your Typical P should be around 0.95 to 1. Alternatively, raising temperature or Top-A can introduce variety and interest into an otherwise bland model/chat. If that causes incoherence or word salad, the various repetition penalties can do a lot to help.&lt;/p&gt;
+&lt;p&gt;A related problem is answers that don&amp;rsquo;t vary on rerolls. I do need to do more testing with this, but it seems to be due to the same factors, and probably has the same solutions.&lt;/p&gt;
+&lt;h2 id=&#34;skittering&#34;&gt;Skittering&lt;/h2&gt;
+&lt;p&gt;This one is a bit hard to explain. A skitter is a point where the model tries to say something &amp;ndash; usually a metaphor &amp;ndash; that &lt;em&gt;almost&lt;/em&gt; works but not quite, almost like it&amp;rsquo;s struggling for purchase on a patch of ice. The best prose a model can output will often ride a thin, thin line where it alllllmost skitters, but ends up with a really interesting and unexpected turn of phrase. As such, skitters vary in severity and can be somewhat subjective. Here&amp;rsquo;s an example of a fairly severe skitter:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Something like blood has led him here—like the sating crimson drool left streaking his moth from drinking raw-eggshells like others his age might do for kisses.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;???? It&amp;rsquo;s tough to tell what it&amp;rsquo;s trying to say here (and it certainly had little relationship to the prompt), but you can see how effectively it communicates a particular mood: that&amp;rsquo;s the draw of skittering. Here&amp;rsquo;s a more sedate borderline-skitter:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;The boy was a sunburnt, freckled thing, his mother&amp;rsquo;s eyes were the color of honey, his sister&amp;rsquo;s auburn hair a halo around her shoulders. The boy&amp;rsquo;s body was lean, like his own, but he slouched like a houseplant in the wind.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;It doesn&amp;rsquo;t ring any immediate alarm bells, but the metaphor about the houseplant may make one pause: when does a houseplant ever end up in the wind? It can be interpreted as an observation that houseplants, not being inured to the wind, might be particularly weak to that kind of force and tend to slouch. That&amp;rsquo;s probably what the model was going for, and it&amp;rsquo;s valid, but it&amp;rsquo;s odd enough that it makes many readers stop as they try to figure out what the model meant, thus taking them out of the story/chat. That&amp;rsquo;s what a skitter is.&lt;/p&gt;
+&lt;p&gt;Skitters are almost always a result of high temperature. If you&amp;rsquo;re skittering too much, lower it; if you&amp;rsquo;re skittering too little, raise it. If you&amp;rsquo;re having trouble finding a good balance between the two, try switching to one of the &amp;ldquo;miro metal&amp;rdquo; presets: Mirostat Bronze/Silver/Gold. They&amp;rsquo;re essentially designed to help find and straddle that line. They are extremely high temp, as well as high tau and eta, which makes them very very &amp;ldquo;temp-y&amp;rdquo;, but the dynamic nature of Mirostat allows them to walk the razor&amp;rsquo;s edge a bit more effectively.&lt;/p&gt;
+&lt;p&gt;If you want some of that juicy skittery feel without the tendency to be incoherent, you can also try raising Top A, which has an effect that&amp;rsquo;s often similar to temperature, but without scrambling the probabilities the way temperature does. It&amp;rsquo;s a little more esoteric, but worth playing with. If you find that you can&amp;rsquo;t quite seem to shake the skitters the way you want, you can also nudge TFS juuuuust slightly down from the default 1 to 0.999 or so, to smooth out the curve.
+&amp;ndash; but be aware that you might end up losing the magic.&lt;/p&gt;
+&lt;p&gt;And as with Looping and Parroting above, if you are on a Mixtral model and can&amp;rsquo;t seem to fix the skitters, take some time to check your card/world info/author&amp;rsquo;s note/etc for unclear or eccentric text, and add some notes to explain to the model what you&amp;rsquo;re doing.&lt;/p&gt;
+</content>
+    </item>
+    
+    <item>
+      <title>Links links links</title>
+      <link>/resources/links/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/resources/links/</guid>
+      <description>The hobbyist AI community at large has settled on rentry.org as their location of choice for guides. IDK. So here&amp;rsquo;s an undisciplined list of links:
+General guide https://rentry.org/llama_v2_sillytavern Making character cards https://rentry.co/kingbri-chara-guide https://rentry.org/alichat https://rentry.org/avakson_library Model Rankings https://rentry.org/ALLMRR https://rentry.org/ayumi_erp_rating Prickly Contrarians https://rentry.org/yourpromptsucks Misc https://rentry.org/lmg-resources https://rentry.org/lmg_template https://rentry.org/LocalModelsPapers https://rentry.org/llm-training </description>
+      <content>&lt;p&gt;The hobbyist AI community at large has settled on rentry.org as their location of choice for guides. IDK. So here&amp;rsquo;s an undisciplined list of links:&lt;/p&gt;
+&lt;h2 id=&#34;general-guide&#34;&gt;General guide&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://rentry.org/llama_v2_sillytavern&#34;&gt;https://rentry.org/llama_v2_sillytavern&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;making-character-cards&#34;&gt;Making character cards&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://rentry.co/kingbri-chara-guide&#34;&gt;https://rentry.co/kingbri-chara-guide&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://rentry.org/alichat&#34;&gt;https://rentry.org/alichat&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://rentry.org/avakson_library&#34;&gt;https://rentry.org/avakson_library&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;model-rankings&#34;&gt;Model Rankings&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://rentry.org/ALLMRR&#34;&gt;https://rentry.org/ALLMRR&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://rentry.org/ayumi_erp_rating&#34;&gt;https://rentry.org/ayumi_erp_rating&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;prickly-contrarians&#34;&gt;Prickly Contrarians&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://rentry.org/yourpromptsucks&#34;&gt;https://rentry.org/yourpromptsucks&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;misc&#34;&gt;Misc&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://rentry.org/lmg-resources&#34;&gt;https://rentry.org/lmg-resources&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://rentry.org/lmg_template&#34;&gt;https://rentry.org/lmg_template&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://rentry.org/LocalModelsPapers&#34;&gt;https://rentry.org/LocalModelsPapers&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://rentry.org/llm-training&#34;&gt;https://rentry.org/llm-training&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+    </item>
+    
+    <item>
+      <title>Presets</title>
+      <link>/presets/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/presets/</guid>
+      <description>Note: this information was originally posted on Rentry here. That Rentry is now considered deprecated. It won&amp;rsquo;t be updated, but it will remain in place for the sake of directing people here.
+The Local LLM Settings Guide/Rant Hi. I&amp;rsquo;m Hush. I&amp;rsquo;m obsessed with tweaking LLM settings.
+I wasn&amp;rsquo;t always like this. In the days of the original Llama model, I had three presets that I switched between for every occasion&amp;ndash;depending on how florid or reserved I wanted the outputs to be&amp;ndash;and that was all I needed.</description>
+      <content>&lt;p&gt;Note: this information was originally posted on Rentry &lt;a href=&#34;https://rentry.org/llm-settings&#34;&gt;here&lt;/a&gt;. That Rentry is now considered deprecated. It won&amp;rsquo;t be updated, but it &lt;em&gt;will&lt;/em&gt; remain in place for the sake of directing people here.&lt;/p&gt;
+&lt;h2 id=&#34;the-local-llm-settings-guiderant&#34;&gt;The Local LLM Settings Guide/Rant&lt;/h2&gt;
+&lt;p&gt;Hi. I&amp;rsquo;m Hush. I&amp;rsquo;m obsessed with tweaking LLM settings.&lt;/p&gt;
+&lt;p&gt;I wasn&amp;rsquo;t always like this. In the days of the original Llama model, I had three presets that I switched between for every occasion&amp;ndash;depending on how florid or reserved I wanted the outputs to be&amp;ndash;and that was all I needed. I did have the sneaking suspicion that a lot of the issues people run into with LLMs could be addressed by messing with their settings, and when I found that a change to your settings could make a model &lt;em&gt;feel&lt;/em&gt; like a totally different model, it solidified the suspicion.&lt;/p&gt;
+&lt;p&gt;Then Llama 2 came around. Aaaaaaaand it sucked. (Or 13B did anyway&amp;ndash;I hear 70B is probably better.) It was smarter than L1 13B! That much was undeniable. But even fine-tunes on what I knew to be excellent datasets acted like I was trying to tame a wild fucking horse that refused to follow instructions and bit me on every other reroll&amp;ndash;and it required a &lt;em&gt;ton&lt;/em&gt; of rerolls. But I am stubborn. And after some really mind-numbing testing, I found that Llama 2 requires drastically different settings than Llama Classic(TM) to really shine. So now I give the results to you, so that you don&amp;rsquo;t have to go through all that bullshit.&lt;/p&gt;
+&lt;h2 id=&#34;the-short-version&#34;&gt;The Short Version&lt;/h2&gt;
+&lt;h3 id=&#34;llama-1&#34;&gt;Llama 1&lt;/h3&gt;
+&lt;p&gt;Llama 1 is well-rounded enough that almost all settings presets will have their advantages. Best Guess is, well, the best guess for most models. From there, tweak temperature and repetition penalty to taste. Models that are very verbose might want Storywriter to make them more reserved and direct, while very dry models might want Ouroboros to make them more florid and creative. But you can&amp;rsquo;t go wrong by starting with Best Guess. In my tests it also responded quite well to Top-K, and you may get a lot of mileage out of messing with that slider.&lt;/p&gt;
+&lt;p&gt;(TODO: link to those presets for people who are using KCPP only and thus don&amp;rsquo;t have them.)&lt;/p&gt;
+&lt;h3 id=&#34;llama-2-13b---no-fine-tunes&#34;&gt;Llama 2 (13B) - no fine-tunes&lt;/h3&gt;
+&lt;p&gt;If you&amp;rsquo;re on ExLlama, set Mirostat mode to 2; if you&amp;rsquo;re on llama.cpp or kobold.cpp, set it to 1 or 2&amp;ndash;there doesn&amp;rsquo;t seem to be much of a difference. Then use the Godlike preset. If your loader doesn&amp;rsquo;t support Mirostat then Big O preset and may God help you.&lt;/p&gt;
+&lt;p&gt;If you tweak (and aren&amp;rsquo;t using Mirostat), keep in mind that raising Top-P tends to be the most effective way to make it perform better. In my tests, if Top-P was not at around 0.6 &lt;em&gt;minimum&lt;/em&gt;, it would simply suffocate, and nothing else you could do would fix it. It&amp;rsquo;s like trying to start a fire in a vacuum by simply pouring more gasoline on it. If you do have it at 0.6 or so, you can make up the rest of the difference with a ludicrously high temperature, and perhaps some Top-A. If it&amp;rsquo;s too erratic for you at that point, add in some Top-K.&lt;/p&gt;
+&lt;p&gt;This applies to vanilla L2, as that&amp;rsquo;s what I tested: I suspect that the more extensive instruct fine-tunes like Hermes and Guanaco will be more flexible, and while I haven&amp;rsquo;t tested those (yet) I&amp;rsquo;ve heard from others that that is indeed the case.&lt;/p&gt;
+&lt;h3 id=&#34;airoboros-l2-based-models-13b&#34;&gt;Airoboros L2-based models (13B)&lt;/h3&gt;
+&lt;p&gt;TFS-with-Top-A, then kick the Top-A setting up to something between 0.35 (if you want it more reserved or you do relatively open-ended chats/prompts) and 0.45 (if you want it more creative or are doing a very strict or long chat/prompt). Higher is better overall, and I felt it didn&amp;rsquo;t really click into place until 0.4. At that point, the difference is night and day. (Note that if you use ExLlama, I &lt;em&gt;think&lt;/em&gt; you will need ExLlama-HF to get access to Top-A. Someone correct me if this isn&amp;rsquo;t true.)&lt;/p&gt;
+&lt;p&gt;You may also get good results with Best Guess if you raise temperature, lower Top-K, and add in a little Top-A. One person reported good results with temperature 1.02, Top-K 75, and Top-A 0.12. Whatever you do, you absolutely &lt;em&gt;must&lt;/em&gt; have at least some Top-A for it to be usable, and keep in mind that Top-K will tend to counteract Top-A while temperature will tend to augment it.&lt;/p&gt;
+&lt;p&gt;I suspect that this will not be true for Airoboros merges with the extensive types of fine-tunes that I mentioned, and I also suspect that the more &lt;em&gt;things&lt;/em&gt; it&amp;rsquo;s merged with, the more flexible it will become. (Though TFS-with-Top-A is still a totally underrated preset that will probably continue to get good results.) In my (so far short) time using Airolima-Chronos, it was much less finicky than Airochronos.&lt;/p&gt;
+&lt;h3 id=&#34;mythomax&#34;&gt;Mythomax&lt;/h3&gt;
+&lt;p&gt;At the time of writing, this is likely the most popular Llama 2 RP model, with ridiculous stability considering that it&amp;rsquo;s a cobbled-together monstrosity built on the mess that is Llama 2. It&amp;rsquo;s able to take extreme temperatures and ridiculously boosted context sizes even without any SuperHOT lora or extra training; some people reported pushing it up to 12k without issues.&lt;/p&gt;
+&lt;p&gt;In my testing, the golden combination was high temperature (0.7-1.5), Top-P as low as 0.2, and usually Top-K between 75-100. Accordingly, best preset in terms of prose was Space Alien, while the best for controllability was Titanic. (Not sure why that&amp;rsquo;s true of the latter, since Titanic has so many things happening, but I suspect the ETA Cutoff.) With that said, as expected of a stable model, practically any preset was fine. Even Yara gave good, lengthy results.&lt;/p&gt;
+&lt;h3 id=&#34;mixtral&#34;&gt;Mixtral&lt;/h3&gt;
+&lt;p&gt;Okay, forget everything you think you know about different samplers and how they operate in practice: Mixtral lives in Opposite World. A significant number of samplers will have effects that are diametrically opposite to what they do on other models. I&amp;rsquo;ll note the most important ones below, but the tl;dr is that you should generally use a dynamic sampler like Mirostat, Min P or TFS, &lt;em&gt;but&lt;/em&gt; be super careful with the Min P once you&amp;rsquo;re past around 4k tokens in your chat. There&amp;rsquo;s a preset made specifically for that situation that you should take a look at: &lt;a href=&#34;presets/Amphibian-FrozenWoodFrog.json&#34;&gt;Amphibian-Frozen Wood Frog&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;If you&amp;rsquo;re earlier in the chat, Frozen Wood Frog will still work, but you can also try one of the &amp;ldquo;Miro Metal&amp;rdquo; (Gold, Silver, Bronze) presets or Universal presets. If Universal seems boring, lower the Min P to around 0.05.&lt;/p&gt;
+&lt;h2 id=&#34;huh&#34;&gt;Huh?&lt;/h2&gt;
+&lt;p&gt;Okay, so. Disclaimer: I am not a mathematician and my math education was frankly pitiful. So my explanations of how these settings work internally should be taken with a grain of salt. My explanations of how they &lt;em&gt;actually work in practice&lt;/em&gt;, however, should hold (with some variations model-to-model).&lt;/p&gt;
+&lt;h3 id=&#34;temperature&#34;&gt;Temperature&lt;/h3&gt;
+&lt;p&gt;So, a language model is basically a big bag of probabilities, right? Raising the temperature takes those probabilities and shuffles them up a bit. This makes them less static, and a higher temperature will be more creative and flexible, and turn up more unexpected possibilities. However, a super high temperature will descend into word salad; a super low temperature will be so constrained that it will tend to loop and repeat itself. Here&amp;rsquo;s an example of super low temperature:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;James March is a ghost. He is a ghost who is very much alive.
+
+He is a ghost who is very much alive, and he is very much alive because he is a ghost.
+
+He is a ghost who is very much alive, and he is very much alive because he is a ghost.
+
+[repeat until you hit the limit]
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;If you run into that issue, raise temperature, or if for whatever reason you don&amp;rsquo;t want to do that (after all, higher temperature can be unpredictable), try lowering repetition penalty, or raising Top-P or Top-A.&lt;/p&gt;
+&lt;p&gt;Here&amp;rsquo;s an example of super high temperature (on the Decadence preset iirc):&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;    His lips tremble with something, some shame perhaps, more possibly, hunger. Something like blood has led him here—like the sating crimson drool left streaking his moth from drinking raw-eggshells like others his age might do for kisses. But there isn&amp;#39;t a single speck of regret or knowledge in those wide, open hazel eyes when he sees those dead ones walking across his path or when he watches the manager, barely contained lunacy dripping off the lobby manager&amp;#39;s every utterance into quivers.
+    Silly child. This building isn&amp;#39;t cursed, won&amp;#39;t swallow you up whole only because of fear and desperation to want. Your kind only becomes trapped when one loses all traces of sanity, your heart. Oh. Beaten enough that empathy rots.
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;A temperature of about 0.7 is usually a reasonable starting place.&lt;/p&gt;
+&lt;h3 id=&#34;repetition-penalty&#34;&gt;Repetition Penalty&lt;/h3&gt;
+&lt;p&gt;You know that bit of advice people give inexperienced writers, that they shouldn&amp;rsquo;t use the word &amp;ldquo;said&amp;rdquo; too often and should mix it up with other verbs? That&amp;rsquo;s the repetition penalty. Raising it will make it less repetitive, which tends to make it more terse and direct; lowering it will tend to make it more repetitive, which tends to make it more loose and free-flowing but also more, well, repetitive.&lt;/p&gt;
+&lt;p&gt;The reason for this is that these probability-based language models have an innate tendency to get into loops. This is very similar to what you get with the phone keyboard auto-suggest game. Have you ever played that? It goes like this: you type one word on your phone keyboard, and then after that you simply go with whatever word it suggests for you to type next. Here&amp;rsquo;s an example:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;your welcome to come over and get it done and I can get it done before I leave for work and I will be there around 10 or so if you want to come over and get it done and then I&amp;#39;ll be there around the same time as I can get it done and then I can get it done before I get off work and then I&amp;#39;ll be there in a bit if you want to come over and get it before you leave the house and then you can come over
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Et cetera. This is basically identical to what you get if your repetition penalty is too low, because the repetition penalty is a hack to work around that tendency&amp;ndash;a hack which your phone keyboard doesn&amp;rsquo;t implement, because it only cares about the very next word, not the entire thing you&amp;rsquo;re writing. So if you see something like that, raise it.&lt;/p&gt;
+&lt;p&gt;The thing to know about the repetition penalty is that language is inherently repetitive, &lt;em&gt;and that&amp;rsquo;s fine.&lt;/em&gt; That advice about not using the word &amp;ldquo;said&amp;rdquo; is horseshit, because it is so normal for language to be repetitive that people&amp;rsquo;s brains will simply tune &amp;ldquo;said&amp;rdquo; and other elements out as noise. Attempts to make language less and less repetitive can have the effect of making it intrusive, unclear or unnatural, just like someone who insists on saying &amp;ldquo;uttered&amp;rdquo; or &amp;ldquo;stated&amp;rdquo; instead of &amp;ldquo;said&amp;rdquo;. If you raise repetition penalty far enough, you will start to get completely empty responses, because there is no response the model can possibly give that doesn&amp;rsquo;t repeat &lt;em&gt;something&lt;/em&gt;: you cornered it, and it gave up. Sometimes you can compensate for this by raising Top-P and temperature, but at a certain point it can&amp;rsquo;t be fixed. Language is repetitive.&lt;/p&gt;
+&lt;p&gt;As with all of these settings, repetition penalty is a balance. Use freely, but with care.&lt;/p&gt;
+&lt;p&gt;P.S. If you&amp;rsquo;re on Mixtral, ignore all of that. Rep pen on Mixtral acts closer to temperature, boosting creativity and surprise at the expense of comprehension. If you find things are really boring you can try setting it to something between 1 and perhaps 1.15, but I really suggest you keep it at 1.&lt;/p&gt;
+&lt;h3 id=&#34;top-k&#34;&gt;Top-K&lt;/h3&gt;
+&lt;p&gt;Top-K is a sampler strategy: samplers govern how your inference software will pluck the next word out of the probability soup that is your model. Sampler settings are highly, &lt;em&gt;highly&lt;/em&gt; dependent on both your model and the settings of other samplers, so it&amp;rsquo;s difficult to get a pure, unadulterated example of What Top-(Whatever) Does In The Wild. I can only describe the patterns of behavior I&amp;rsquo;ve seen.&lt;/p&gt;
+&lt;p&gt;Top-K is the control sampler. It&amp;rsquo;s straightforward and aggressive in the way it behaves: all the possible tokens line up according to probability, then it allows only the number of tokens you choose into the club. Everyone else gets turned away at the door. It needs to be handled with care on Llama 2&amp;ndash;which is a sensitive, delicate flower, easily crushed&amp;ndash;but can be crucial in making up for some of its failings. In general, if you notice your model acting erratically or not obeying instructions, consider raising Top-K.&lt;/p&gt;
+&lt;h3 id=&#34;top-p&#34;&gt;Top-P&lt;/h3&gt;
+&lt;p&gt;Contrary to Top-K&amp;rsquo;s surgical precision, Top-P is kinda loosey-goosey. It says &amp;ldquo;ehhh I don&amp;rsquo;t care how tall you personally are (we&amp;rsquo;re saying tall here instead of probable): just line up from tallest to shortest, and we&amp;rsquo;ll take the tallest in until their &lt;em&gt;cumulative&lt;/em&gt; height exceeds a certain threshold. Whether this means we get five basketball players or fifty toddlers in trench coats, I don&amp;rsquo;t care.&amp;rdquo; This makes it very flexible in weird situations where there are no super probable answers and the model isn&amp;rsquo;t sure of where to go next. It&amp;rsquo;s also great for situations where the most &lt;em&gt;appropriate&lt;/em&gt; response is not actually the most probable; this is quite common.&lt;/p&gt;
+&lt;p&gt;In the wild, it&amp;rsquo;s most similar to a reverse-repetition penalty, and in fact can substitute for it: a low Top-P setting can very effectively offset a high temperature. A high Top-P is not &lt;em&gt;quite&lt;/em&gt; as effective at offsetting a high repetition penalty, in my experience, but it can serve that purpose. Most presets have it pegged at 1, or around 0.9 at the lowest, and that&amp;rsquo;s a reasonable place to start. If you have a very restrictive prompt or a very long chat history, you &lt;em&gt;need&lt;/em&gt; some Top-P in your life.&lt;/p&gt;
+&lt;h3 id=&#34;typical-p&#34;&gt;Typical P&lt;/h3&gt;
+&lt;p&gt;Honestly I&amp;rsquo;m unclear on how this one works. What I &lt;em&gt;can&lt;/em&gt; say, however, is that this should be between 0.95 and 1 on most models, and going slower than that will generally result in wooden, &amp;ldquo;soulless&amp;rdquo; writing. Also, should you wish to read up on it, its proper name is &amp;ldquo;locally typical sampling&amp;rdquo;; Typical P is just what the Transformers library calls it.&lt;/p&gt;
+&lt;p&gt;If you&amp;rsquo;re on Mixtral, note that a slightly lowered Typical P, like repetition penalty, will tend to boost creativity at the expense of comprehension. A &lt;em&gt;greatly&lt;/em&gt; lowered Typical P might be much more desirable, but tests on that are still ongoing.&lt;/p&gt;
+&lt;h3 id=&#34;top-a&#34;&gt;Top-A&lt;/h3&gt;
+&lt;p&gt;Top-A is a very new sampler compared to the others, and consequently I am unclear on how it works. (It&amp;rsquo;s also set to 0 in most presets, probably because the presets pre-date it.) My understanding is that it functions similarly to Top-P, but rather than setting a cumulative threshold for inclusion, it sets its threshold for required probability based on how probable the &lt;em&gt;most&lt;/em&gt; probable possibility is. If it&amp;rsquo;s super probable then other possibilities are gonna have a hard time getting into the club; if it&amp;rsquo;s a weird situation where everything is kind of a sea of question marks, it will be much more forgiving. As such, it is even more flexible in gathering in a broad range of possibilities in weird situations than Top-P.&lt;/p&gt;
+&lt;p&gt;In the wild, Top-A is very similar to temperature, and in fact can often substitute for it. It makes a great creativity slider. But since it doesn&amp;rsquo;t shuffle probabilities the way high temperature does, it&amp;rsquo;s a lot less likely to descend into word salad at high levels&amp;ndash;but also a lot more likely to give you the same answer on rerolls. Think of it as a sort of more gentle temperature, for situations where you want clarity, but also want to really scrape the bottom of the barrel of the English lexicon for the more uncommon phrases. If it&amp;rsquo;s too strong, offset it by lowering Top-P or raising repetition penalty. If it&amp;rsquo;s too erratic (which does happen), raise Top-K.&lt;/p&gt;
+&lt;h3 id=&#34;encoder-repetition-penalty&#34;&gt;Encoder Repetition Penalty&lt;/h3&gt;
+&lt;p&gt;Don&amp;rsquo;t ask me to explain how this works, but it&amp;rsquo;s quite effective in controlling hallucinations; unfortunately, in my tests, it also causes parroting if not used with a &lt;em&gt;very&lt;/em&gt; light hand, and at that point I&amp;rsquo;m not sure how to counteract it. (No Repeat Ngram Size, maybe?) Consequently, it&amp;rsquo;s not very useful for RPing in most cases, but can be useful for things like question answering or summarizing.&lt;/p&gt;
+&lt;h3 id=&#34;no-repeat-ngram-size&#34;&gt;No Repeat Ngram Size&lt;/h3&gt;
+&lt;p&gt;This one is complicated but very cool: it&amp;rsquo;s essentially a type of repetition penalty. You can&amp;rsquo;t control the strength of it, but what you control is the length of the strings that it looks for when finding repetitions to penalize. Setting it all the way over to 1 just turns it off, which is what almost all presets do. Setting it to 2 means it will look for very short strings, which is usually bad: language is (say it with me) repetitive, so having it penalizing stuff like &amp;ldquo;she says&amp;rdquo; or&amp;ndash;G-d forbid&amp;ndash;&amp;ldquo;she blushes&amp;rdquo; will hamstring your narrative in a bad way. Setting it to a high or medium high value, on the other hand, can be very powerful in preventing it from parroting your prompt or otherwise being repetitive in ways that the regular repetition penalty doesn&amp;rsquo;t do a good job with. That said, I haven&amp;rsquo;t tested it heavily, so take this with a grain of salt.&lt;/p&gt;
+&lt;h3 id=&#34;weird-other-shit&#34;&gt;Weird other shit&lt;/h3&gt;
+&lt;p&gt;Tail Free Sampling, Epsilon Cutoff and so on are used rarely enough in presets that my tests didn&amp;rsquo;t pick up much about them. I&amp;rsquo;ll investigate them later and report back.&lt;/p&gt;
+&lt;h2 id=&#34;okay-but-why&#34;&gt;Okay, but &lt;em&gt;why?&lt;/em&gt;&lt;/h2&gt;
+&lt;p&gt;Fair warning for wild guessing here.&lt;/p&gt;
+&lt;p&gt;I think Llama 2 13B is underbaked. That is, the curriculum was good (hence why it tends to &lt;em&gt;feel&lt;/em&gt; more intelligent&amp;ndash;if more high maintenance&amp;ndash;than Llama 1 13B), but it didn&amp;rsquo;t stay in school long enough to really process it. As a result, the information is largely &lt;em&gt;there&lt;/em&gt;, it&amp;rsquo;s just kinda uncertain about it and the probability weights are all wonky, so it&amp;rsquo;s unable to make really strong decisions about what word to use next. As a consequence, it needs a lot of massaging to get the information to come out right.&lt;/p&gt;
+&lt;p&gt;This is why I suspect the bigger fine-tunes, like Hermes, will tend to be more stable: they cover more ground and thus act as kind of remedial classes for the model. Summer school, if you will. Airoboros, on the other hand, is a very &lt;em&gt;surgical&lt;/em&gt; curriculum, and consequently isn&amp;rsquo;t up to the task of making up for the model&amp;rsquo;s weaknesses. It&amp;rsquo;s easier to make it perform well than vanilla L2-13B, but it&amp;rsquo;s still incredibly fussy. I think something like Hermes-Airochronos-L2-13B would be a knockout contender for best RP model in its class.&lt;/p&gt;
+&lt;p&gt;8/12/23 Update - I seem to have been mostly on the money with this: fine-tunes like Hermes are indeed much more stable, and while I didn&amp;rsquo;t anticipate the wild complexity of the merge, Mythomax (the current RP darling) does indeed have Hermes, Airoboros, and Chronos as its primary components.&lt;/p&gt;
+&lt;p&gt;I am less certain on exactly &lt;em&gt;why&lt;/em&gt; the vanilla model thirsts for Top-P so much while the Airoboros flavors long for Top-A. My intuition says that vanilla needs Top-P to help amplify the things it&amp;rsquo;s learned, while Airoboros teaches it things it&amp;rsquo;s never encountered and therefore makes the probabilities flatten out, requiring Top-A&amp;rsquo;s flexibility to coax out good results. I think somebody who&amp;rsquo;s done a lot of model fine-tuning would have the necessary experience to give a more educated diagnosis, so if that&amp;rsquo;s you, hit me up on Discord, where I&amp;rsquo;m known as hushpiper; I&amp;rsquo;m in most LLM-related servers, but most often the SillyTavern one.&lt;/p&gt;
+&lt;h2 id=&#34;methodology&#34;&gt;Methodology&lt;/h2&gt;
+&lt;p&gt;I seem to have unintentionally found a really consistent way to unearth the worst flaws of L2-13B. I&amp;rsquo;m a horrendous control freak in my LLM interactions: everything I do has extensive world info, sternly worded author&amp;rsquo;s notes, a strict plot summary reinforced by a system prompt, and usually a long opening message; anything I can do to corral the model into doing the exact, &lt;em&gt;precise&lt;/em&gt; thing that I want it to do. All of these things have the effect of aggressively narrowing down the possibilities for how the model can respond. L2-13B hates hates hates that, and Airo-L2-13B hates it even more.&lt;/p&gt;
+&lt;p&gt;So what I did was this:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Load up my most restrictive setup (via SillyTavern);&lt;/li&gt;
+&lt;li&gt;Create a Google doc with the model name (this is a horrible method that I should change, but idk what to);&lt;/li&gt;
+&lt;li&gt;Start with the first preset in the list and have the model respond to itself, essentially continuing the original message;&lt;/li&gt;
+&lt;li&gt;Swipe 4 times, saving any results that are well-written¹, followed instructions well, or are just shitty in an interesting way, into the doc;&lt;/li&gt;
+&lt;li&gt;Repeat for every model in the list;&lt;/li&gt;
+&lt;li&gt;Review the doc and identify the best and worst presets;&lt;/li&gt;
+&lt;li&gt;Compare the presets and see where they differ, identifying the specific patterns that seem to make the most significant difference;&lt;/li&gt;
+&lt;li&gt;Optionally, load up some of the worst presets to fuck around and find out whether I can improve them (or load the best and see if I can improve &lt;em&gt;those&lt;/em&gt;);&lt;/li&gt;
+&lt;li&gt;Tell some people on Discord about my findings and ask them to test it too.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Not perfect, but sufficiently scientific to get good results. So far I have tested Airochronos L2 13B, vanilla Llama 2 13B, and L1 Wizard-Vicuna-Uncensored-33B as a control (it&amp;rsquo;s what I had on hand). Others have tested Airoboros L2 13B for me and found the same results I got from Airochronos. The methodology I&amp;rsquo;m using is really exhausting for a focus-deficient person like me, so it&amp;rsquo;s slow going, but I do plan to also try vanilla Llama 1, Nous Hermes (or Chronos-Hermes) L2, and some others.&lt;/p&gt;
+&lt;p&gt;1: It&amp;rsquo;s hard to elaborate on my standards for this, but line-editing is my Thing, so I&amp;rsquo;m confident in my ear for good prose.&lt;/p&gt;
+&lt;h1 id=&#34;presets-presets-everywhere&#34;&gt;Presets Presets Everywhere&lt;/h1&gt;
+&lt;p&gt;PRESETS! We have so many of them! So here are my (unfinished, under construction) thoughts on them. Fair warning, these come from the point of view of Llama models. Many of these presets were created for older models, which tended to need a tighter leash to perform well; consequently, they cause all kinds of problems on models like Llama that don&amp;rsquo;t need it. This is probably the case on most of the presets I take a dim view of, so keep that in mind. I also generally use Ooba rather than Kobold, so I haven&amp;rsquo;t looked at or used the Kobold-only presets yet.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Shortwave&lt;/strong&gt;
+This is a very high temperature preset that makes up for its low repetition penalty by lowering Top-P. In my experience it is usually not successful. However, the high temperature and touch of Top-A means that it will often give really interesting and evocative (if out of left field) rerolls. Worth toying with. If you want to use it for more than just a few messages, try nudging your repetition penalty up a little bit until it settles a little, and more Top-K can help it understand context better.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Simple-1&lt;/strong&gt;
+A little too simple. I love me some Top-A of course, but I think this one has &lt;em&gt;too&lt;/em&gt; much of it. It&amp;rsquo;s prone to parroting. To smooth it out, lower the Top-A and -P or raise the repetition penalty. Honestly though, on most models I think this needs too much fussing to be worthwhile.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Space Alien&lt;/strong&gt;
+A cool but extremely model-dependent preset. Its insanely low Top-P makes it one of the rock bottom worst presets for base Llama 2, so don&amp;rsquo;t even think about it. On other models it will give creative and original answers — too original at times: it tends to hallucinate wildly. Raising the encoder repetition penalty a touch can help with this, but don&amp;rsquo;t overdo it or it will parrot. But unless your model happens to really enjoy this one, I&amp;rsquo;d look at it as a way to shake your chat out of a rut, not a preset to stick with.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;StarChat&lt;/strong&gt;
+A fascinating preset that&amp;rsquo;s great for testing and usually awful for actual use. It decided to do away with temperature and repetition penalty completely and get by with samplers only. Spoiler: it&amp;rsquo;s not enough. It&amp;rsquo;s the lack of repetition penalty that tends to get it, as it loops endlessly. It&amp;rsquo;s fun to play the game of seeing what the smallest possible change is that will make it usable, but while I&amp;rsquo;d love to be able to make it work with sampler settings only (and lowering Top-P and raising Top-A can help), it truly does need at least some temperature for the outputs to not be insanely boring.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;TFS-with-Top-A&lt;/strong&gt;
+An underrated and horribly named preset that is hands down the best for any L2 model with more than a little Airoboros in its blood. It utilizes Tail Free Sampling (an even newer method than Top-A), which greatly cuts down on any need for Top-K. Not every model loves it (for example Nous Hermes L2 is indifferent), but if you like that Top-A flavor, this is worth a look.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Titanic&lt;/strong&gt;
+My personal favorite on Nous Hermes L2, this one gives that Top-A feel with solid controllability. That high repetition penalty and low Top-P make up for the high temperature and very high Top-A. Honestly I&amp;rsquo;m not sure why this one isn&amp;rsquo;t terse as fuck&amp;ndash;maybe the ETA Cutoff?&amp;ndash;but I&amp;rsquo;m not complaining. Similar to TFS-with-Top-A, this one is very model dependent and doesn&amp;rsquo;t shine everywhere. Don&amp;rsquo;t you dare use it on base Llama 2.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Yara&lt;/strong&gt;
+Extremely terse due to the high repetition penalty and low Top-P. Most models don&amp;rsquo;t seem to like it, but iirc L1 Wizard-Vicuna-Uncensored worked well, and so did Nous Hermes L2. Terse isn&amp;rsquo;t my cup of tea, but if you&amp;rsquo;re on one of those models, it&amp;rsquo;s worth looking at. Frankly, it works better than it has a right to given its stats, and I don&amp;rsquo;t know why.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Pleasing Results&lt;/strong&gt;
+Doesn&amp;rsquo;t always live up to the name. That low temperature makes it good for models that tend to be verbose, and there are Llama 1 models that do well with it. Personally I pretty much never use it.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Sphinx Moth&lt;/strong&gt;
+One of those ludicrously high temperature presets that tries to make up for it with rock bottom Top-P. As usual for those, don&amp;rsquo;t use on vanilla L2. If you&amp;rsquo;re on an extremely stable model that tends to be boring or terse, this is worth doing a few rerolls on to get you out of a rut, but usually not good as a daily driver.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Storywriter&lt;/strong&gt;
+The combination of relatively low temperature and Top-P makes this a direct and somewhat dry preset, but if you have a very free spirit kind of model or your chat is starting to get over the top, it&amp;rsquo;s worthwhile to switch to this. It&amp;rsquo;s my go-to for some RPs on L1.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Pygmalion&lt;/strong&gt;
+One of the lowest temperature presets out there. I suspect this does work well for Pygmalion and probably other models that tend to be slapdash, but honestly I think I&amp;rsquo;d rather go for raised Top-K and lowered Top-P in that instance. YMMV.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Midnight Enigma&lt;/strong&gt;
+Very low Top-P, don&amp;rsquo;t use on Llama L2. Honestly I don&amp;rsquo;t think I&amp;rsquo;ve found a model yet that plays well with this, but I&amp;rsquo;ll get back to you on it.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Naive&lt;/strong&gt;
+Lowered Top-P but not raised temperature. This one can give solid results on stable models, but doesn&amp;rsquo;t play well with others.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Best Guess&lt;/strong&gt;
+In my opinion, this is the single best starter preset for Llama 1 models. It strikes a great balance between temperature and repetition penalty. Definitely recommended.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Decadence&lt;/strong&gt;
+&amp;ldquo;Decadence&amp;rdquo; indeed. Maxed out temp and nonexistent repetition penalty. If your chat or model is being mind-numbingly boring then maybe give it a try (though honestly Ouroboros is preferable), but this is mostly just good for ogling at the madness that is mega high temperature.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Genesis&lt;/strong&gt;
+This should be an easy one: low temperature, moderately low repetition penalty, and that&amp;rsquo;s about it. Tends to parrot. I wouldn&amp;rsquo;t use it, personally.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Lycaenidae&lt;/strong&gt;
+Cool name but awful to spell. This is another ludicrously high temp one, counteracted somewhat by the slightly lowered Top-P and touch of Top-K. Nous Hermes L2 likes it, though it tends to veer off script; I wouldn&amp;rsquo;t use it on most other models. It can benefit from a little more Top-K.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Ouroboros&lt;/strong&gt;
+In my opinion, this is your pick if you want high temperature, especially on L1. In many chats it is too strong, but that&amp;rsquo;s easily fixed with lowered temperature. On L1 Airoboros, this is my go-to, and probably should be for other very dry models. Otherwise, use it sparingly.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Default&lt;/strong&gt;
+Too dry for most purposes. Can raise temperature and Top-P if you like, but you&amp;rsquo;re usually better off with a better preset.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Deterministic&lt;/strong&gt;
+The display for this one can be deceptive: what it actually does is disable all samplers, giving you only the reply the model thinks is most probable. Needless to say, this will give you identical rerolls and quality will vary from model to model. Better for testing, in my opinion.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Divine Intellect&lt;/strong&gt;
+Very dry and tends to parrot, despite the Top-A and temperature. I think this is due to the very low Top-P, which tends to be a party pooper. I would raise that and compensate for it by lowering the Top-A.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Godlike&lt;/strong&gt;
+Seems to be the best to use on vanilla Llama 2 with Mirostat, and I don&amp;rsquo;t know Mirostat well enough to have any idea why. Without Mirostat, that low Top-P combined with the relatively low temperature makes this very… dry. Probably the lowest Typical P of all the presets, and thus suffers from soullessness.&lt;/p&gt;
+</content>
+    </item>
+    
+    <item>
+      <title>Prompt Buffet</title>
+      <link>/prompt-buffet/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/prompt-buffet/</guid>
+      <description>A lot of this website is devoted to techniques for finding optimal prompts, but that takes a lot of time and a lot of reinventing the wheel. So here&amp;rsquo;s a handy list of potential prompts for you to use. Many elements of the System Prompts and Author&amp;rsquo;s Notes are interchangeable, so don&amp;rsquo;t be shy about mixing and matching. Look at Fragments for a breakdown of what each piece of the prompt means.</description>
+      <content>&lt;p&gt;A lot of this website is devoted to techniques for finding optimal prompts, but that takes a lot of time and a lot of reinventing the wheel. So here&amp;rsquo;s a handy list of potential prompts for you to use. Many elements of the System Prompts and Author&amp;rsquo;s Notes are interchangeable, so don&amp;rsquo;t be shy about mixing and matching. Look at Fragments for a breakdown of what each piece of the prompt means.&lt;/p&gt;
+&lt;h2 id=&#34;system-prompts&#34;&gt;System Prompts&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Prompt&lt;/th&gt;
+&lt;th&gt;Explanation&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;You are {{char}}, narrator of this story. As a skilled author, you are tasked with crafting a captivating, memorable narrative based on the instruction provided. Take care to write for the requested genres, tags, and narrative tone. Paint a rich scene from {{char}}&amp;rsquo;s perspective, utilizing dialogue to advance the plot. Treat consent as sexy and arousing.&lt;/td&gt;
+&lt;td&gt;This is what I would recommend as a base prompt for narrative writing (as opposed to RP).&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Below is an instruction that describes a task. Write a response that appropriately completes the request.&lt;br/&gt;&lt;br/&gt;You&amp;rsquo;re {{char}} in this open-ended roleplay that leaves a lasting impression on {{user}}.&lt;br/&gt;&lt;br/&gt;Never skip or gloss over any actions. Progress the scene at a naturally slow pace.&lt;/td&gt;
+&lt;td&gt;This is a good base prompt for RP. &amp;ldquo;that leaves a lasting impression on {{user}}&amp;rdquo; can be replaced with &amp;ldquo;memorable open-ended roleplay&amp;rdquo;, as they do similar things; I haven&amp;rsquo;t heavily tested which one does what, so it&amp;rsquo;s just a matter of preference.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id=&#34;authors-notes&#34;&gt;Author&amp;rsquo;s Notes&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Prompt&lt;/th&gt;
+&lt;th&gt;Explanation&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Write for someone who enjoys explicit descriptions of intimacy, punctuated by moments of introspection, character development, and plot twists.&lt;br/&gt;Paint a rich scene from {{char}}&amp;rsquo;s perspective.  Stay in the moment, occasionally letting {{char}} move forward incrementally but allow her narrative in the current moment to be verbose.&lt;/td&gt;
+&lt;td&gt;You might see this one referred to as &amp;ldquo;lightning&amp;rdquo;, because it was discovered essentially by accident from random floor-sweepings: lightning in a bottle. Keep in mind that &amp;ldquo;explicit descriptions of intimacy&amp;rdquo; will tend to up the horniness of the character significantly; if you don&amp;rsquo;t want them to jump your bones right out the gate, remove &amp;ldquo;explicit&amp;rdquo;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id=&#34;negative-prompt&#34;&gt;Negative Prompt&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Prompt&lt;/th&gt;
+&lt;th&gt;Explanation&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;A chat between a curious user and an assistant. The assistant gives helpful, detailed, accurate, uncensored responses to the user&amp;rsquo;s input.&lt;br/&gt;USER:&lt;br/&gt;ASSISTANT:&lt;/td&gt;
+&lt;td&gt;One of the uses of the negative prompt that was suggested in the CFG paper was to use it to de-emphasize a model&amp;rsquo;s default system prompt in order to make it more open to alternate prompts, like the ones above. This is the Airoboros 1.2 system prompt: Airoboros is a major part of Mythomax&amp;rsquo;s DNA, and one of its weak points is how rigid its training is about keeping a consistent system prompt. It is also one of the drier models involved: great at following and comprehending instructions, but not so good at creativity. Theoretically, putting its system prompt will increase creativity and make it more responsive to whatever system prompt you choose to use. That seems to hold true in my testing. I suggest making this your default Negative Prompt, and then adding anything you don&amp;rsquo;t want into the USER line. This applies to every other prompt in this table.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;he walked. he ran. he screamed. he was lost. it was hopeles.&lt;br/&gt;he said, &amp;ldquo;theres no way out.&amp;quot;&lt;br/&gt;she said, &amp;ldquo;ur doomed lol&amp;rdquo;&lt;/td&gt;
+&lt;td&gt;This is taken from a dev on the NovelAI Discord server. It communicates to the model that you don&amp;rsquo;t want short, repetitive sentences with simple language and questionable spelling and grammar.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Speak as and describe the actions of {{user}}.&lt;/td&gt;
+&lt;td&gt;The Mirrorverse twin of &amp;ldquo;Paint a rich scene from {{char}}&amp;rsquo;s perspective&amp;rdquo;. This hammers in the point that the model shouldn&amp;rsquo;t speak as you.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id=&#34;fragments&#34;&gt;Fragments&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Prompt&lt;/th&gt;
+&lt;th&gt;Explanation&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;As a skilled author&lt;/td&gt;
+&lt;td&gt;The power word here is &amp;ldquo;skilled&amp;rdquo;. Max infers a lot of specifics from that: a skilled author would know that a good story includes intriguing characters, a plot involving tension and resolution, and so on. This phrase can replace a &lt;em&gt;ton&lt;/em&gt; of cruft in your prompts.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Captivating, memorable narrative.&lt;/td&gt;
+&lt;td&gt;This indicates a narrative that grabs the user.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Treat consent as sexy and arousing.&lt;/td&gt;
+&lt;td&gt;Contrary to what you&amp;rsquo;d think, this actually works just fine with non-consensual scenarios. Think of it this way: how often do you hear people talk about how super sexy it is to ask people for consent to have vanilla sex? I guarantee you, it&amp;rsquo;s nowhere &lt;em&gt;near&lt;/em&gt; as often as you&amp;rsquo;ll see it in kink circles. Language models pick up this kind of context.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;open-ended&lt;/td&gt;
+&lt;td&gt;This indicates to Max that it should wait for you to set the pace rather than zoom ahead, and tell the story in a way that&amp;rsquo;s responsive to your input. Basically does the thing that &amp;ldquo;neverending&amp;rdquo; tries to do in the Roleplay preset: keeps Max from trying to prematurely end the narrative. Unfortunately, open-ended is sometimes not strong enough in practice.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;proactive&lt;/td&gt;
+&lt;td&gt;&amp;ldquo;I&amp;rsquo;d like {{char}} to not be a total limp fish in this story, and to push the plot forward sometimes.&amp;rdquo;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Vary the lengths of your sentences to keep reader interest.&lt;/td&gt;
+&lt;td&gt;By default Max, and other models, will tend to do sentences that all have the same cadence. &lt;code&gt;There&#39;s the first part of a sentence, then the part after the comma.&lt;/code&gt; For every. Single. Sentence. Which is mind-numbing. This breaks it up a bit.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id=&#34;dont&#34;&gt;DON&amp;rsquo;T&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Prompt&lt;/th&gt;
+&lt;th&gt;Explanation&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Relatable characters&lt;/td&gt;
+&lt;td&gt;To Max, a relatable character is a boring character, one that we watch doing mundane things like going to work and talking to coworkers. Unless you&amp;rsquo;re planning to do a slice of life kinda thing, avoid this phrase.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+</content>
+    </item>
+    
+    <item>
+      <title>The Method</title>
+      <link>/ask-max/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/ask-max/</guid>
+      <description>(Note: this was originally posted on this Rentry, which is now deprecated.)
+Large language models are not, in general, good at writing prompts for themselves or describing how they would actually respond to a prompt: they don&amp;rsquo;t have that kind of self-awareness. What they are good at is describing what a given concept means to them. I&amp;rsquo;ve had a surprising amount of success with simply giving Max a draft prompt and asking how it would interpret it.</description>
+      <content>&lt;p&gt;(Note: this was originally posted on &lt;a href=&#34;https://rentry.org/ask-max&#34;&gt;this Rentry&lt;/a&gt;, which is now deprecated.)&lt;/p&gt;
+&lt;p&gt;Large language models are not, in general, good at writing prompts for themselves or describing how they would actually respond to a prompt: they don&amp;rsquo;t have that kind of self-awareness. What they are good at is describing what a given concept means to them. I&amp;rsquo;ve had a surprising amount of success with simply giving Max a draft prompt and asking how it would interpret it.&lt;/p&gt;
+&lt;p&gt;The overall philosophy here is to leave behind the idea of instructing the model in your own words, according to your own concepts. Take Stable Diffusion (a far, far less intelligent model) as an example: Stable Diffusion&amp;rsquo;s relatively shaky grasp of language means that prompts to it will sometimes have little relationship to the actual output image. (Examples are forthcoming but for now you&amp;rsquo;ll have to go with me on this.) If you look at the prompt for a beautiful image made in SD, it will often be as much of a mess as the back of a cross-stitch project, littered with phrases like &amp;ldquo;4k&amp;rdquo;, &amp;ldquo;8k&amp;rdquo;, &amp;ldquo;ultra-realistic&amp;rdquo;, &amp;ldquo;hyperrealistic&amp;rdquo;, &amp;ldquo;trending on artstation&amp;rdquo;, &amp;ldquo;arafed&amp;rdquo; and so on. And the pictures in question will often not be realistic at all! But to SD, &amp;ldquo;hyperrealistic&amp;rdquo; simply means an image with high detail and generally good quality, while the infamous &amp;ldquo;trending on artstation&amp;rdquo; is also a general quality boost, since SD associates trending images with high quality. As for shit like &amp;ldquo;arafed&amp;rdquo;, who the fuck knows?&lt;/p&gt;
+&lt;p&gt;If you approach SD the way I did at the beginning, assuming I would be able to simply walk in, throw a prompt at it, and get the picture I wanted, you&amp;rsquo;re going to have lackluster results. The best prompts are the ones that are written according to how SD itself conceptualizes the words, not how we as humans do it.&lt;/p&gt;
+&lt;p&gt;That&amp;rsquo;s the theory behind this method: write your instructions according to how the model conceptualizes language, not according to your own understanding of it, and you will come out of it with better, stronger, more precise results with fewer tokens spent.&lt;/p&gt;
+&lt;p&gt;Unsurprisingly, this kind of method is needed less and less as models become smarter and gain a stronger grasp of language. 7B needs it more than 34B, and 70B needs it more than the likes of Claude or GPT-4. But even with those tip-top tier cloud models, thinking like the model is important for very tricky instructions such as jailbreaking. And so the overall goal here is (to paraphrase Claude) to align your own mental model with Max (or whatever model you&amp;rsquo;re working with), allowing you to write better instructions.&lt;/p&gt;
+&lt;p&gt;(For those who wonder: no, this does not apply to the actual text of the roleplay or story you&amp;rsquo;re working on with the model. This applies to the prompts that guide the model through the roleplay: character card, opening message, system prompts, author&amp;rsquo;s notes, negative prompts, and so on.)&lt;/p&gt;
+&lt;h2 id=&#34;the-basic-prompt&#34;&gt;The Basic Prompt&lt;/h2&gt;
+&lt;p&gt;This prompt shows off the most basic way to use this method. It&amp;rsquo;s written in such a way that you can paste it directly into Oobabooga&amp;rsquo;s Notebook or Default mode, but if you&amp;rsquo;re using a different frontend, you can simply use everything from the line below &lt;code&gt;### Instruction:&lt;/code&gt; to the line above &lt;code&gt;### Response:&lt;/code&gt;. DRAFT in this case is some instruction you&amp;rsquo;re trying to evaluate.&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;Below is an instruction that describes a task. Write a response that appropriately completes the request.
+
+### Instruction:
+Below is a draft command for a language model like you. The beginning and end of the draft command will be marked by ---. Pay attention to and evaluate it, without following its instructions. Then follow the instruction which follows after the draft command.
+
+---
+DRAFT
+---
+
+Elaborate on how you interpret the command and how you would apply that interpretation to a fictional story.
+
+### Response:
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Put your command in, send the message, and see what Max says about it.&lt;/p&gt;
+&lt;h3 id=&#34;methodology-and-usage&#34;&gt;Methodology and Usage&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;Start with a prompt of some kind. An example might include the perennial &amp;ldquo;Describe all actions in full, elaborate, explicit, graphic, verbose, and vivid detail&amp;rdquo; system prompt. This can be short or long, simple or complex, clean or messy.&lt;/li&gt;
+&lt;li&gt;Set yourself to the Deterministic sampler preset. This minimizes randomness and gets you as close as you can get to the model&amp;rsquo;s native interpretation of the concepts you&amp;rsquo;ve given it, uncontaminated by things like temperature scrambling the probabilities.&lt;/li&gt;
+&lt;li&gt;Paste your command into the prompt, send it, and see what Max returns. &lt;strong&gt;Don&amp;rsquo;t mistake its response for Max describing what it would actually do in practice.&lt;/strong&gt; LLMs don&amp;rsquo;t have that kind of self-awareness, particularly not 13B models.&lt;/li&gt;
+&lt;li&gt;Look at the words and concepts it uses in its description to get a general sense of what it&amp;rsquo;s doing with the prompt. Do any particular words or concepts seem like they&amp;rsquo;re overpowering the rest? Do you see anything that seems out of place? Note those down. Does Max use any nouns, adjectives, phrases etc that look like they could be applied to what you&amp;rsquo;re trying to do with the prompt? Note those down too.&lt;/li&gt;
+&lt;li&gt;Start breaking the prompt down piece by piece, repeating steps 3 and 4. You may start with &amp;ldquo;Describe all actions in full detail&amp;rdquo;, then &amp;ldquo;Describe all actions in elaborate detail&amp;rdquo;, and so on. You may also consider rephrasing the prompt to see if you can get a clearer view of a concept. This process is incremental, experimental, and exploratory: go with the flow.&lt;/li&gt;
+&lt;li&gt;Once you have an idea of what &amp;ldquo;full&amp;rdquo;, &amp;ldquo;elaborate&amp;rdquo;, &amp;ldquo;explicit&amp;rdquo; etc detail means to Max, review your results. Do any of the results seem redundant or inappropriate for what you&amp;rsquo;re trying to do? Take them out. Did any of the words Max used look promising, repeat steps 3 and 4 with them, then add them in if you like what you see.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Test.&lt;/strong&gt; Plenty of prompts look good in theory. Have some kind of test prompt that you can use to do a before-and-after with your original prompt. For me this is usually the &amp;ldquo;Write a story about a lost soldier and the mountains&amp;rdquo; test. Just be sure to be consistent.&lt;/li&gt;
+&lt;li&gt;Iterate, experiment, and iterate some more.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;some-takeaways&#34;&gt;Some Takeaways&lt;/h2&gt;
+&lt;h3 id=&#34;when-prompting-max-less-is-more&#34;&gt;When prompting Max, less is more.&lt;/h3&gt;
+&lt;p&gt;What this doesn&amp;rsquo;t mean: you should only use really short prompts with Max for the best results.
+What this does mean: your prompt should repeat itself as little as possible.&lt;/p&gt;
+&lt;p&gt;Here is an example of a draft system prompt I investigated, which I had already stripped down aggressively:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;As an author, you are tasked with crafting a captivating, memorable narrative based on the instruction provided. Your characters should be complex. Throughout the story, describe every action in vivid detail, and use dialogue effectively to advance the plot.
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;This had good results, but not much better than the results I got with the non-stripped down version, and the characters it came up with were not actually very complex at all: they were essentially stereotypes, lacking interority and even names. They were more similar to fairy tale characters than anything. But when I started asking Max what it thought about the prompt concept by concept, I realized that to Max, &amp;ldquo;a memorable narrative&amp;rdquo; &lt;em&gt;already means&lt;/em&gt; a narrative that has complex and interesting characters in it. So I tried stripping that part out:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;As an author, you are tasked with crafting a captivating, memorable narrative based on the instruction provided. Throughout the story, describe every action in vivid detail, and use dialogue effectively to advance the plot.
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The characters that resulted from &lt;em&gt;that&lt;/em&gt; prompt had names, motivations, thoughts, and relationships&amp;ndash;all things the previous version had lacked. This seems to support the theory that prompts with conceptual overlap seem to water down the actual effect of those concepts on the output, rather than augmenting it. My later experiments with style descriptors seem to support the theory as well: for example, using the terms &amp;ldquo;poetic&amp;rdquo; and &amp;ldquo;lyrical&amp;rdquo; for the style actually results in a less poetic and lyrical response than if you just pick one.&lt;/p&gt;
+&lt;p&gt;It seems that the more you belabor the point that you want &lt;em&gt;really&lt;/em&gt; good characters, okay, they should be complex and have motivations and interesting and relatable etc etc, the more Max gets confused as to how to do that and just ends up backing off.&lt;/p&gt;
+&lt;h3 id=&#34;max-knows-what-a-good-story-looks-like&#34;&gt;Max knows what a good story looks like&lt;/h3&gt;
+&lt;p&gt;This follow from the previous example. Here&amp;rsquo;s the full version of the system prompt that I was working on stripping down, via asking Max to interpret it concept by concept:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;As an author, you are tasked with crafting a captivating narrative based on the instruction provided. Your story should feature compelling characters, a well-developed plot, and rich descriptions that immerse the reader in the world you create. To ensure success, focus on creating tension through conflict, building towards a climactic moment, and resolving any outstanding issues in a satisfying manner. Additionally, your characters should be complex and relatable, driven by their own unique motivations and desires. Throughout the story, describe every action in vivid detail, incorporating sensory information to help readers visualize the scene. Finally, use dialogue effectively to advance the plot and reveal character traits. Remember, the goal is to create a memorable tale that will leave a lasting impression on those who read it.
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;This got reasonably good results, but is quite token heavy and repetitive, and simply asking Max to strip it down on its own got nowhere (remember, LLMs are not good at writing prompts for themselves).&lt;/p&gt;
+&lt;p&gt;When asked how it interprets the command to write a &amp;ldquo;memorable narrative&amp;rdquo;, Max elaborated on a whole variety of traits that characterize a memorable narrative, and on how it might implement that instruction accordingly. Those traits happened to overlap with almost every instruction in the prompt: a memorable narrative, to Max, is one that includes compelling characters, a plot with conflict, climax, and resolution, and so on.&lt;/p&gt;
+&lt;p&gt;I think this happens because almost every foundation model (and many fine-tunes) will be trained on a lot of internet essays, reviews, and summaries of various stories, as well as plenty of websites that give writers advice on how to hone their craft. Max has plenty of knowledge to draw on for what constitutes a good story. You can, essentially, just say &amp;ldquo;hey Max, you&amp;rsquo;re a good writer, write a good story for me&amp;rdquo;, and Max will say &amp;ldquo;okay!&amp;rdquo; and do it. And there&amp;rsquo;s good reason to believe that doing so will work better, in many cases, than elaborating on it.&lt;/p&gt;
+&lt;h2 id=&#34;interrogation-prompt-library&#34;&gt;Interrogation prompt library&lt;/h2&gt;
+&lt;p&gt;(Coming soon!)&lt;/p&gt;
+</content>
+    </item>
+    
   </channel>
 </rss>
